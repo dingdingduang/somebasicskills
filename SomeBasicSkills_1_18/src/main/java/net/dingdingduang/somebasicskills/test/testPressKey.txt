@@ -1,0 +1,85 @@
+package net.dingdingduang.somebasicskills.test;
+
+import net.dingdingduang.somebasicskills.networking.NetworkingMsgInitialization;
+import net.dingdingduang.somebasicskills.networking.SendTestToServer;
+import net.dingdingduang.somebasicskills.networking.SendTestToServerTwo;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import org.lwjgl.glfw.GLFW;
+
+import net.dingdingduang.somebasicskills.Constants;
+
+import java.util.HashMap;
+
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.*;
+import static net.dingdingduang.somebasicskills.globalmethods.ServerPlayerMethods.ConvertClientPlayerToServerPlayer;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalServerPlayerValues.getSPlayerValue2BaseMultiplierMap;
+
+//import static net.minecraft.client.gui.components.ComponentRenderUtils.wrapComponents;
+
+@Mod.EventBusSubscriber(modid = Constants.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+public class testPressKey {
+    public static final KeyMapping STBasicLibs_TestKeyEvent1 =
+            new KeyMapping(
+                    "key.display_SomeBasicSkills1", GLFW.GLFW_KEY_X, "key.categories." + Constants.MOD_ID);
+
+    public static final KeyMapping STBasicLibs_TestKeyEvent2 =
+            new KeyMapping(
+                    "key.display_SomeBasicSkills2", GLFW.GLFW_KEY_C, "key.categories." + Constants.MOD_ID);
+
+    public static final KeyMapping STBasicLibs_TestKeyEvent3 =
+            new KeyMapping(
+                    "key.display_SomeBasicSkills3", GLFW.GLFW_KEY_V, "key.categories." + Constants.MOD_ID);
+
+    @SubscribeEvent
+    public static void registerKeyMappingsEvent(RegisterKeyMappingsEvent event) {
+        event.register(STBasicLibs_TestKeyEvent3);
+    }
+
+    @Mod.EventBusSubscriber(modid = Constants.MOD_ID, value = Dist.CLIENT)
+    private static class InputEvents {
+        @SubscribeEvent
+        public static void inputEvent(InputEvent.KeyInputEvent event) {
+            Minecraft minecraft = getMinecraftInstance();
+
+            Player cp1 = minecraft.player;
+            if (cp1 == null || minecraft.screen != null) return;
+
+            if (STBasicLibs_TestKeyEvent3.isDown()) {
+                NetworkingMsgInitialization.sendToServer(new SendTestToServer());
+
+//
+            }
+
+            if (STBasicLibs_TestKeyEvent2.isDown()) {
+                NetworkingMsgInitialization.sendToServer(new SendTestToServerTwo());
+//                ServerPlayer sp1 = ConvertClientPlayerToServerPlayer(cp1);
+////                applyPermMaxHealthToEntity(sp1, 10, OP_ADDITION, "guard1");
+//                applyTimedArmorToEntity(sp1, 100, Math.random()*10, OP_ADDITION, false, "guard");
+//                double temprandomdouble = Math.random()/20;
+//                applyTimedArmorToEntity(sp1, 200, temprandomdouble, OP_ADDITION, false, "guard1");
+//                temprandomdouble = Math.random()/20;
+//                applyTimedArmorToEntity(sp1, 300, temprandomdouble, OP_ADDITION, false, "guard2");
+            }
+
+            if (STBasicLibs_TestKeyEvent1.isDown()) {
+                ServerPlayer sp1 = ConvertClientPlayerToServerPlayer(cp1);
+//                //printout status map
+                HashMap<String, Double> tempStatusMap = getSPlayerValue2BaseMultiplierMap().get(sp1);
+                for (String attrName: tempStatusMap.keySet()) {
+                    double attrAmount = Math.abs(tempStatusMap.get(attrName));
+                    if (attrAmount > 0.001 || Math.round(attrAmount) > 0) {
+                        printInGameMsg(String.format("%s: %f ", attrName, tempStatusMap.get(attrName)));
+                    }
+                }
+            }
+        }
+    }
+}

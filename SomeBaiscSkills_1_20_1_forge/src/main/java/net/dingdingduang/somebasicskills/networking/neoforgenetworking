@@ -1,0 +1,15 @@
+    public static void handle(final ? data, final PlayPayloadContext context) {
+        // Do something with the data, on the network thread
+//        blah(data.name());
+
+        // Do something with the data, on the main thread
+        context.workHandler().submitAsync(() -> {
+                    //do on main thread
+
+                })
+                .exceptionally(e -> {
+                    // Handle exception
+                    context.packetHandler().disconnect(getPacketFailedTranslatableComponent(e.getMessage()));
+                    return null;
+                });
+    }

@@ -1,0 +1,88 @@
+package net.dingdingduang.somebasicskills.networking;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.function.Supplier;
+
+import static net.dingdingduang.somebasicskills.Constants.*;
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.getMinecraftServerInstance;
+import static net.dingdingduang.somebasicskills.sbsattributes.PermAttributesDistributor.*;
+
+public class SendTestToServerTwo {
+    public SendTestToServerTwo() {
+
+    }
+
+    public SendTestToServerTwo(FriendlyByteBuf buf) {
+
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+
+    }
+
+    public boolean handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            //do shiet on server side
+            ServerPlayer sp1 = ctx.get().getSender();
+
+            MinecraftServer mcServer = getMinecraftServerInstance();
+            if (mcServer == null) { return; }
+
+            applyPermArmorToEntity(sp1, 0.0, OP_ADDITION, "111");
+            double temprandomdouble = 0.0;
+            applyPermArmorToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "111");
+            temprandomdouble = 0.0;
+            applyPermArmorToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "111");
+
+            applyPermMaxHealthToEntity(sp1, 0.0, OP_ADDITION, "222");
+            temprandomdouble = 0.0;
+            applyPermMaxHealthToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "222");
+            temprandomdouble = 0.0;
+            applyPermMaxHealthToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "222");
+
+            applyPermArmorToughnessToEntity(sp1, 0.0, OP_ADDITION, "333");
+            temprandomdouble = 0.0;
+            applyPermArmorToughnessToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "333");
+            temprandomdouble = 0.0;
+            applyPermArmorToughnessToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "333");
+
+            applyPermAttackDMGToEntity(sp1, 0.0, OP_ADDITION, "444");
+            temprandomdouble = 0.0;
+            applyPermAttackDMGToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "444");
+            temprandomdouble = 0.0;
+            applyPermAttackDMGToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "444");
+
+            applyPermAttackKnockbackToEntity(sp1, 0.0, OP_ADDITION, "555");
+            temprandomdouble = 0.0;
+            applyPermAttackKnockbackToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "555");
+            temprandomdouble = 0.0;
+            applyPermAttackKnockbackToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "555");
+
+            applyPermLuckToEntity(sp1, 0.0, OP_ADDITION, "666");
+            temprandomdouble = 0.0;
+            applyPermLuckToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "666");
+            temprandomdouble = 0.0;
+            applyPermLuckToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "666");
+
+            applyPermMovementSpeedToEntity(sp1, 0.0, OP_ADDITION, "777");
+            temprandomdouble = 0.0;
+            applyPermMovementSpeedToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "777");
+            temprandomdouble = 0.0;
+            applyPermMovementSpeedToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "777");
+
+            applyPermAttackSpeedToEntity(sp1, 0.0, OP_ADDITION, "888");
+            temprandomdouble = 0.0;
+            applyPermAttackSpeedToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "888");
+            temprandomdouble = 0.0;
+            applyPermAttackSpeedToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "888");
+
+        });
+
+        return true;
+    }
+}

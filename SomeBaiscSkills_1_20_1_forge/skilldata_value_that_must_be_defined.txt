@@ -1,0 +1,42 @@
+[
+Category and SkillID String must be unique,
+each category must have one SkillID named "TITLE" for category icon
+    "RoleCategoryName": "ABC",
+    "SkillID": "CEF_0_0",
+
+translate text in lang file
+    "translatableTextSkillTreeTitle": "xxx.yyy.zzz1",
+    "translatableTextTitle": "xxx.yyy.zzz2",
+    "translatableTextDescription": "xxx.yyy.zzz3",
+
+resource for btn icons
+    "resLocBtn": "textures/xxx/xxx.png",
+    "resLocDisBtn": "textures/yyy/yyy.png",
+    "resLocHoveredBtn": "textures/zzz/zzz.png",
+
+Buttons position need to be properly arranged otherwise will overlay with other buttons
+    "btnPosX": 0,
+    "btnPosY": 0,
+
+Types 0 has Active skill, 1 has Passive skill, (2 won't work for now) 2 both Active and Passive
+    "SkillType": 0,
+
+Cast type 0 instant cast without channeling, 1 channeling, holding button without releasing the key
+    "SkillCastType": 0,
+
+Target 0 no target, 1 target entity, 2 point target, does nothing for now
+    "SkillTarget": 0,
+
+setting about leveling skill
+    "requiredLevel": 0,
+    "lvlUpgInterval": 2,
+    "xpCostPerLeveling": 10,
+    "totalLevel": 10,
+    "preRequisiteSkillID": [],
+    "preRequisiteSkillRequiredLVL": [],
+
+if you have 10 levels, then following array size should also have exactly the same size
+    "castingTime": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "cooldownTime": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "channelingTime": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+]

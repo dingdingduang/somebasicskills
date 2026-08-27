@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "net.dingdingduang.somebasicskills.mixin",
+  "compatibilityLevel": "JAVA_16",
+  "client": [
+    "SBSKeyboardEventMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+    "SBSLivingEntityOnHurtEventMixin",
+    "SBSPlayerEntityOnHurtEventMixin"
+  ]
+}

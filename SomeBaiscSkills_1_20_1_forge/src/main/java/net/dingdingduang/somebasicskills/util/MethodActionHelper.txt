@@ -1,0 +1,43 @@
+package net.dingdingduang.somebasicskills.util;
+
+import java.util.Objects;
+
+public class MethodActionHelper {
+    private MethodAction action;
+    private String ID;
+
+    public MethodActionHelper(MethodAction Action, String id) {
+        this.action = Action;
+        this.ID = id;
+    }
+
+    @Override
+    public int hashCode() {
+//        return this.ID.hashCode() + action.hashCode();
+        return this.ID.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof MethodActionHelper methodActionHelper) {
+            return this.ID.equals(methodActionHelper.getID());
+        }
+        return false;
+    }
+
+    public MethodAction getAction() {
+        return action;
+    }
+
+    public void setAction(MethodAction action) {
+        this.action = action;
+    }
+
+    public String getID() {
+        return ID;
+    }
+
+    public void setID(String ID) {
+        this.ID = ID;
+    }
+}

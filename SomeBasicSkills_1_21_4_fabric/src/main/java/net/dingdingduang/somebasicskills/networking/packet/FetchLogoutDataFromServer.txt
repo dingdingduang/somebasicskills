@@ -1,0 +1,36 @@
+package net.dingdingduang.somebasicskills.networking.packet;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.function.Supplier;
+
+import static net.dingdingduang.somebasicskills.event.RemovePlayerDataWhenLogout.RemoveClientPlayerData;
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.getMinecraftInstance;
+
+public class FetchLogoutDataFromServer {
+    public FetchLogoutDataFromServer() {
+
+    }
+
+    public FetchLogoutDataFromServer(FriendlyByteBuf buf) {
+
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+
+    }
+
+    public boolean handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            //do shiet on client side
+            Player cp1 = getMinecraftInstance().player;
+            if (cp1 == null) { return; }
+
+            RemoveClientPlayerData();
+        });
+
+        return true;
+    }
+}

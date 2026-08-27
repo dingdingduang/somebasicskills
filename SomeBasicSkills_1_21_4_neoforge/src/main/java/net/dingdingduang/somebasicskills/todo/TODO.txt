@@ -1,0 +1,24 @@
+Needed
+1. cooldown + buff duration gui
+3. TODO: fetch cooldown and channeling from server to client
+6. flag for saving settings for less packet sending
+7. set cooldown channeling to be final, pass them to client from server, and is skilltree active boolean
+
+Optional
+1. Config file
+2. (optional?) btn gray if it doesn't meet basic lvl requirement
+3. (optional) confirm button and cancel info that would pop if setting not saved yet,
+ copy client map, confirm -> send map to server, cancel -> client map new reference to copy map
+ purpose: less packet sending
+4. (optional) show skill icon even not in cd?
+5. (optional) prohibit player to downgrade skill or ratio that would refund like 50% of xp consumption
+6. (optional) abs(skillclienttotalticks - skillservertotalticks) > skillservertotalticks * 0.75, then activate skill action?
+7. (optional) hashmap -> hashtable or concurrenthashmap(? to prevent potential concurrent exception)
+8. (optional) list all skill passive status bonuses with character panel?
+9. (OPTIONAL): check effect icon if living entity has one, when is removed by drinking milk or something, remove attr
+10. (less priority) synchronize with server tick for channeling and cooldown or other better solution
+    that would resolve fast client ticks
+
+
+PROBLEM
+1.

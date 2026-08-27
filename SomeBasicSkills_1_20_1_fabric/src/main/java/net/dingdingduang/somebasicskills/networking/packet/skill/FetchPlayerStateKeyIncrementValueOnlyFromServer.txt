@@ -1,0 +1,51 @@
+package net.dingdingduang.somebasicskills.networking.packet.skill;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.HashMap;
+import java.util.function.Supplier;
+
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.printInGameMsg;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalClientPlayerValues.getCPlayerState;
+
+public class FetchPlayerStateKeyIncrementValueOnlyFromServer {
+    private final String StateName;
+    private final int AnyInteger;
+
+    public FetchPlayerStateKeyIncrementValueOnlyFromServer(String stateName, int anyInteger) {
+        this.StateName = stateName;
+        this.AnyInteger = anyInteger;
+    }
+
+    public FetchPlayerStateKeyIncrementValueOnlyFromServer(FriendlyByteBuf buf) {
+        this.StateName = buf.readUtf();
+        this.AnyInteger = buf.readInt();
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+        buf.writeUtf(this.StateName);
+        buf.writeInt(this.AnyInteger);
+    }
+
+    public boolean handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            //do shiet on client side
+            HashMap<String, Integer> tempPlayerState = getCPlayerState();
+            int incrementInteger;
+            if (tempPlayerState.containsKey(this.StateName)) {
+                printInGameMsg("exist val: "+tempPlayerState.get(this.StateName));
+                incrementInteger = tempPlayerState.get(this.StateName) + this.AnyInteger;
+            }
+            else {
+                incrementInteger = this.AnyInteger;
+            }
+            printInGameMsg("name: "+this.StateName);
+            printInGameMsg("val: "+this.AnyInteger);
+            printInGameMsg("reduced: "+incrementInteger);
+            tempPlayerState.put(this.StateName, incrementInteger);
+        });
+
+        return true;
+    }
+}

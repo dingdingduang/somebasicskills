@@ -1,0 +1,42 @@
+package net.dingdingduang.somebasicskills.networking.packet.key;
+
+import com.google.common.collect.Maps;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.HashMap;
+import java.util.function.Supplier;
+
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalClientPlayerValues.setCPlayerKey2SkillID;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalClientPlayerValues.setCPlayerSkillID2Key;
+
+public class FetchQuickSlotSettingFromServer {
+    HashMap<Integer, String> ClientPlayerKey2SkillID;
+    HashMap<String, Integer> ClientPlayerSkillID2Key;
+
+    public FetchQuickSlotSettingFromServer(HashMap<Integer, String> keyCode2Skill,
+                                           HashMap<String, Integer> Skill2keyCode) {
+        this.ClientPlayerKey2SkillID = keyCode2Skill;
+        this.ClientPlayerSkillID2Key = Skill2keyCode;
+    }
+
+    public FetchQuickSlotSettingFromServer(FriendlyByteBuf buf) {
+        this.ClientPlayerKey2SkillID = buf.readMap(Maps::newHashMapWithExpectedSize, FriendlyByteBuf::readInt, FriendlyByteBuf::readUtf);
+        this.ClientPlayerSkillID2Key = buf.readMap(Maps::newHashMapWithExpectedSize, FriendlyByteBuf::readUtf, FriendlyByteBuf::readInt);
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+        buf.writeMap(this.ClientPlayerKey2SkillID, FriendlyByteBuf::writeInt, FriendlyByteBuf::writeUtf);
+        buf.writeMap(this.ClientPlayerSkillID2Key, FriendlyByteBuf::writeUtf, FriendlyByteBuf::writeInt);
+    }
+
+    public boolean handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            //do shiet on client side
+            setCPlayerKey2SkillID(this.ClientPlayerKey2SkillID);
+            setCPlayerSkillID2Key(this.ClientPlayerSkillID2Key);
+        });
+
+        return true;
+    }
+}

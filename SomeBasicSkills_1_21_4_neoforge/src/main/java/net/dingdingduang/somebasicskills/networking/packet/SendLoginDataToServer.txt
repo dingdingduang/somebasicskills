@@ -1,0 +1,75 @@
+package net.dingdingduang.somebasicskills.networking.packet;
+
+import net.dingdingduang.somebasicskills.networking.NetworkingMsgInitialization;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.HashMap;
+import java.util.function.Supplier;
+
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.printInGameMsg;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalServerPlayerValues.*;
+
+public class SendLoginDataToServer {
+    public SendLoginDataToServer() {
+
+    }
+
+    public SendLoginDataToServer(FriendlyByteBuf buf) {
+
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+
+    }
+
+    public boolean handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            //do shiet on server side
+            printInGameMsg("ddd");
+            ServerPlayer sp1 = ctx.get().getSender();
+//            if (sp1.getName() != null) {
+//                printInGameMsg("sp1 name: " + sp1.getName());
+//            }
+//
+//            //only execute once when server activate
+//            if (!isGlobalServerValuesInitialized()) {
+//                globalServerValuesInit();
+//            }
+//
+//            printInGameMsg("fuck");
+//
+            HashMap<ServerPlayer, HashMap<String, Integer>> GlobalPlayerSkillID2lvlMap = getGlobalPlayerSkillID2lvlMap();
+//            GlobalPlayerSkillID2lvlMap.put(sp1, new HashMap<String, Integer>());
+//
+//            MinecraftServer mcServer = getMinecraftServerInstance();
+//            if (mcServer == null) { return; }
+//            //read player data based on playername
+//            SkillPlayernameFileReadFrom(mcServer, sp1);
+//
+//            //initialize player hashmap
+//            initializeServerPlayerHashMapsWhenLogin(sp1);
+//            //initialize player status
+//            setupSkillDataPlayerInitialization(sp1);
+//
+//            //read player keyCombo and quickSlot setting
+//            KeycomboPlayernameFileReadFrom(mcServer, sp1);
+//            QuickslotPlayernameFileReadFrom(mcServer, sp1);
+//
+////            increasePlayerCooldownBase(sp1, -1);
+////            increasePlayerCooldownMultiplier(sp1, -0.25);
+////            increasePlayerTemporaryCooldownBase(sp1, -3);
+////            increasePlayerTemporaryCooldownMultiplier(sp1, -0.25);
+////
+////            increasePlayerChannelingBase(sp1, -0.25);
+////            increasePlayerChannelingMultiplier(sp1, -0.25);
+////            increasePlayerTemporaryChannelingBase(sp1, -0.25);
+////            increasePlayerTemporaryChannelingMultiplier(sp1, -0.25);
+//
+            NetworkingMsgMethods.sendToPlayer(new FetchLoginDataFromServer(GlobalPlayerSkillID2lvlMap.get(sp1)), sp1);
+        });
+
+        return true;
+    }
+}

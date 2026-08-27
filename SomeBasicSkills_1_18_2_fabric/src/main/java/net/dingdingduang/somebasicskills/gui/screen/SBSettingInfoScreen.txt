@@ -1,0 +1,204 @@
+package net.dingdingduang.somebasicskills.gui.screen;
+
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.dingdingduang.somebasicskills.Constants;
+import net.dingdingduang.somebasicskills.gui.screen.widget.SkillInfoWidget;
+import net.dingdingduang.somebasicskills.networking.NetworkingSendMsgMethods;
+import net.dingdingduang.somebasicskills.resourcelocation.icon.IconBasicResourceLocation;
+import net.dingdingduang.somebasicskills.skilldata.SkillDataJson;
+import net.dingdingduang.somebasicskills.util.SBSImageButton;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import org.checkerframework.checker.units.qual.C;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import static net.dingdingduang.somebasicskills.globalmethods.ClientPlayerMethods.*;
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.getMinecraftInstance;
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.printInGameMsg;
+import static net.dingdingduang.somebasicskills.globalmethods.GuiMethods.CreateImageButton;
+import static net.dingdingduang.somebasicskills.globalmethods.GuiMethods.drawImageOnly;
+import static net.dingdingduang.somebasicskills.globalmethods.LocaleLanguageMethods.getLocalizationText;
+import static net.dingdingduang.somebasicskills.globalmethods.SoundMethods.PlayLocalKeyboardErrSound;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalClientPlayerValues.*;
+import static net.dingdingduang.somebasicskills.skilldata.SkillDataInitialization.getID2SkillData;
+import static net.dingdingduang.somebasicskills.skilldata.SkillDataInitialization.getRole2IconLocMap;
+
+@OnlyIn(Dist.CLIENT)
+public class SBSettingInfoScreen extends Screen {
+    private static final ResourceLocation windowBackground =  new ResourceLocation(Constants.MOD_ID, "textures/gui/window.png");
+
+    private int maxWidth;
+    private int maxHeight;
+    private int top;
+    private int left;
+
+    private double scrollDist = 0.0D;
+
+    private boolean isAllSBSettingBtnsRendered = false;
+    private HashMap<SBSImageButton, SBSettingButtonInfo> AllSettingBtns2Counter;
+
+    public SBSettingInfoScreen(String title) {
+        this(Component.literal(getLocalizationText(title)));
+    }
+
+    protected SBSettingInfoScreen(Component component) { super(component); }
+
+    @Override
+    public void init() {
+        maxHeight = Math.min(height - 30, 260);
+//        maxHeight = Math.min(height - 78, 260);
+        maxWidth = 250;
+        left = (width - maxWidth) / 2;
+        top = (height - maxHeight) / 2;
+    }
+
+    @Override
+    public void render(PoseStack pPoseStack, int mouseX, int mouseY, float partialTick) {
+        // Make sure we use a higher z-index.
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 201);
+
+        // Background and frame.
+        this.renderBackground(guiGraphics);
+
+        // Render screen.
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        if (!this.isAllSBSettingBtnsRendered) {
+            renderAllSettingBtns(guiGraphics);
+        }
+
+        guiGraphics.pose().popPose();
+    }
+
+    public void renderAllSettingBtns(GuiGraphics guiGraphics) {
+        // Make sure we use a higher z-index.
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 202);
+
+        this.isAllSBSettingBtnsRendered = true;
+        this.AllSettingBtns2Counter = new HashMap<>();
+        SBSImageButton tempBtn;
+
+        int counter = 1;
+        for (int i = 0; i < 20; i ++) {
+            for (String configName : getCPlayerConfig().keySet()) {
+                tempBtn = CreateImageButton(left + 12, top + 18 * counter, 16, 16, IconBasicResourceLocation.GUI_SB_GENERAL_SETTING_ICON, true, IconBasicResourceLocation.GUI_SB_GENERAL_SETTING_ICON_GLOW, 202);
+                tempBtn.setPressedFuncAction((btn) -> {
+                    int settingInt = getCPlayerConfig().get(configName);
+                    //true false
+                    if (settingInt != 0) {
+                        getCPlayerConfig().put(configName, 0);
+                        NetworkingSendMsgMethods.SendConfigFromClientSideToServer(configName, 0);
+                    } else {
+                        getCPlayerConfig().put(configName, 1);
+                        NetworkingSendMsgMethods.SendConfigFromClientSideToServer(configName, 1);
+                    }
+                });
+                addRenderableWidget(tempBtn);
+                tempBtn.setButtonOriginalPosY(top + 18 * counter);
+                this.AllSettingBtns2Counter.put(tempBtn, new SBSettingButtonInfo(counter, false));
+                counter++;
+            }
+        }
+
+        guiGraphics.pose().popPose();
+    }
+
+    @Override
+    public void renderBackground(GuiGraphics guiGraphics) {
+        // Make sure we use a higher z-index.
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 201);
+
+        // Background and frame.
+        int heightPerPart = maxHeight / 2;
+        RenderSystem.enableBlend();
+
+        // Frame will be constructed in two parts, top and bottom.
+        guiGraphics.blit(windowBackground, left, top, 0, 0, maxWidth, heightPerPart);
+        guiGraphics.blit(
+                windowBackground,
+                left,
+                top + heightPerPart,
+                0,
+                150 - heightPerPart,
+                maxWidth,
+                heightPerPart + 10);
+
+        // Background with gradient.
+        //0x80 FF EF F0, alpha, red, green, blue
+        guiGraphics.fillGradient(
+                left + 9, top + 17, left + maxWidth - 7, top + maxHeight - 19, -0x80FFEFF0, -0x80FFEFF0);
+        RenderSystem.disableBlend();
+
+        // Title
+        guiGraphics.drawString(this.font, this.title, left + 6, top + 6, 0xFFFFFF);
+
+        guiGraphics.pose().popPose();
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+        if (this.isAllSBSettingBtnsRendered) {
+//            this.scrollDist = (Math.abs(this.scrollDist) > 132) ? ((scroll >= 0) ? 128 : -128) : this.scrollDist + scroll;
+            this.scrollDist = this.scrollDist + scroll;
+
+            if (this.scrollDist <= -512) {
+                this.scrollDist = -511;
+            }
+            else if (this.scrollDist >= 1) {
+                this.scrollDist = 0;
+            }
+
+            //TODO, just fucking get a new screen without remove those stupid btns
+            for (SBSImageButton tempBTN : this.AllSettingBtns2Counter.keySet()) {
+                int intScrollDist = (int) Math.round(this.scrollDist);
+                tempBTN.setY(tempBTN.getButtonOriginalPosY() + intScrollDist);
+                SBSettingButtonInfo currentBtnInfo = this.AllSettingBtns2Counter.get(tempBTN);
+                if (!currentBtnInfo.isRemoved() &&  -intScrollDist > 18 * (currentBtnInfo.getCounter() - 1) ) {
+                    currentBtnInfo.setRemoved(true);
+                    removeWidget(tempBTN);
+                }
+                else if (currentBtnInfo.isRemoved() && -intScrollDist <= 18 * (currentBtnInfo.getCounter() - 1) ) {
+                    currentBtnInfo.setRemoved(false);
+                    addRenderableWidget(tempBTN);
+                }
+            }
+        }
+
+        return super.mouseScrolled(mouseX, mouseY, scroll);
+    }
+
+    @Override
+    public boolean isMouseOver(double mouseX, double mouseY) {
+        return mouseY >= this.top
+                && mouseY <= this.top + this.maxHeight
+                && mouseX >= this.left
+                && mouseX <= this.left + this.maxWidth;
+    }
+
+    private class SBSettingButtonInfo {
+        private int counter;
+        private boolean isRemoved;
+
+        public SBSettingButtonInfo(int Counter, boolean IsRemoved) {
+            this.counter = Counter;
+            this.isRemoved = IsRemoved;
+        }
+
+        public void setCounter(int a) { this.counter = a; }
+        public int getCounter() { return this.counter; }
+
+        public void setRemoved(boolean a) { this.isRemoved = a; }
+        public boolean isRemoved() { return this.isRemoved; }
+    }
+}

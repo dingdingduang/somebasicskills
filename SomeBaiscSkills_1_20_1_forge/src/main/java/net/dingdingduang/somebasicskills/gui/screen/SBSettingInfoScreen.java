@@ -1,0 +1,255 @@
+package net.dingdingduang.somebasicskills.gui.screen;
+
+import net.dingdingduang.somebasicskills.resourcelocation.icon.IconBasicResourceLocation;
+import net.dingdingduang.somebasicskills.util.MethodConfigHelper;
+import net.dingdingduang.somebasicskills.util.SBSImageButton;
+
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import org.lwjgl.glfw.GLFW;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.getComponentWithSpecifiedString;
+import static net.dingdingduang.somebasicskills.globalmethods.GuiMethods.CreateImageButton;
+import static net.dingdingduang.somebasicskills.globalmethods.LocaleLanguageMethods.getLocalizationText;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalClientPlayerValues.*;
+
+@OnlyIn(Dist.CLIENT)
+public class SBSettingInfoScreen extends Screen {
+    private double scrollDist = 0.0D;
+
+    private int MaxTextLength;
+    private int IncrementTextLengthVal;
+
+    private boolean isAllSBSettingBtnsRendered = false;
+    private HashMap<String, SBSImageButton> ConfigName2SettingBtn;
+    private HashMap<String, Integer> ConfigName2SettingBtnCounter;
+
+    private boolean showSBSettingDetailsScreen = false;
+    private SBSettingDetailsScreen LocalSBSettingDetailsScreen;
+
+    public SBSettingInfoScreen(String title) {
+        this(getComponentWithSpecifiedString(getLocalizationText(title)));
+    }
+
+    protected SBSettingInfoScreen(Component component) { super(component); }
+
+    @Override
+    public void init() {
+        super.init();
+        this.MaxTextLength = width - 32;
+//        this.IncrementTextLengthVal = (int) (this.MaxTextLength * 0.1666667f);
+        this.IncrementTextLengthVal = (int) (this.MaxTextLength * 0.143f);
+    }
+
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Make sure we use a higher z-index.
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 201);
+
+
+        if (this.showSBSettingDetailsScreen()) {
+            this.LocalSBSettingDetailsScreen.render(guiGraphics, mouseX, mouseY, partialTick);
+        }
+        else {
+            // Background and frame.
+            this.renderBackground(guiGraphics);
+
+            // Render screen.
+            super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+            if (!this.isAllSBSettingBtnsRendered) {
+                renderAllSettingBtns(guiGraphics);
+            }
+            renderAllSettingBtnsDescription(guiGraphics);
+        }
+
+        guiGraphics.pose().popPose();
+    }
+
+    public void renderAllSettingBtns(GuiGraphics guiGraphics) {
+        // Make sure we use a higher z-index.
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 202);
+
+        this.isAllSBSettingBtnsRendered = true;
+        this.ConfigName2SettingBtn = new HashMap<>();
+        this.ConfigName2SettingBtnCounter = new HashMap<>();
+        SBSImageButton tempBtn;
+
+        int counter = 0;
+        HashMap<String, HashMap<String, MethodConfigHelper>> tempClientConfigSetting = getCPlayerConfig2Settings();
+        for (String configName : tempClientConfigSetting.keySet()) {
+            int yPos = getYPos(counter);
+            tempBtn = CreateImageButton(0, yPos, 16, 16, IconBasicResourceLocation.GUI_SB_GENERAL_SETTING_ICON, true, IconBasicResourceLocation.GUI_SB_GENERAL_SETTING_ICON_GLOW, 202);
+            HashMap<String, MethodConfigHelper> tempConfigDetailSetting = tempClientConfigSetting.get(configName);
+            tempBtn.setPressedFuncAction((btn) -> {
+                //get new screen
+                pressedSBDetailsSettingBtnAction(new SBSettingDetailsScreen(configName, tempConfigDetailSetting));
+            });
+            if (!this.ConfigName2SettingBtn.containsKey(configName)) {
+                addRenderableWidget(tempBtn);
+            }
+            tempBtn.setButtonOriginalPosY(yPos);
+            this.ConfigName2SettingBtnCounter.put(configName, counter);
+            this.ConfigName2SettingBtn.put(configName, tempBtn);
+            counter++;
+        }
+
+        guiGraphics.pose().popPose();
+    }
+
+    private int getYPos(int counter) { return 18 * counter + 8; }
+    private int getYTextPos(int exCounter) { return 4 + 8 * exCounter; }
+
+    public void renderAllSettingBtnsDescription(GuiGraphics guiGraphics) {
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 203);
+        HashMap<String, HashMap<String, MethodConfigHelper>> tempClientConfigSetting = getCPlayerConfig2Settings();
+
+        int intRoundedScrollDist =  (int) Math.round(this.scrollDist);
+
+        StringBuilder tempStrBuilder1;
+        int totalExtraYCounter = 0;
+        for (String configName : tempClientConfigSetting.keySet()) {
+            SBSImageButton tempImgBtn = this.ConfigName2SettingBtn.get(configName);
+            int currentUpdatedBtnPos = getYPos(this.ConfigName2SettingBtnCounter.get(configName)) + getYTextPos(totalExtraYCounter) + intRoundedScrollDist;
+            ArrayList<String> tempSeparatedStrArrList = separateString(getLocalizationText(configName));
+            if (tempSeparatedStrArrList.size() > 1) {
+                int extraYCounter = 0;
+                for (String tempSeparatedStr : tempSeparatedStrArrList) {
+                    tempStrBuilder1 = new StringBuilder();
+                    tempStrBuilder1.append(tempSeparatedStr);
+                    guiGraphics.drawString(this.font, tempStrBuilder1.toString(), 32, currentUpdatedBtnPos + 4 + 8 * extraYCounter, 0xFFFFFF);
+                    extraYCounter = extraYCounter + 1;
+                }
+                tempImgBtn.setButtonOriginalPosY( currentUpdatedBtnPos );
+                tempImgBtn.setSBSBtnPosY(tempImgBtn.getButtonOriginalPosY());
+                totalExtraYCounter = totalExtraYCounter + extraYCounter;
+
+            }
+            else {
+                tempStrBuilder1 = new StringBuilder();
+                tempStrBuilder1.append(tempSeparatedStrArrList.get(0));
+
+                guiGraphics.drawString(this.font, tempStrBuilder1.toString(), 32, tempImgBtn.getY() + 4, 0xFFFFFF);
+                tempImgBtn.setButtonOriginalPosY( currentUpdatedBtnPos );
+                tempImgBtn.setSBSBtnPosY(tempImgBtn.getButtonOriginalPosY());
+            }
+        }
+        guiGraphics.pose().popPose();
+    }
+
+    public ArrayList<String> separateString(String str1) {
+        ArrayList<String> separatedStringList = new ArrayList<>();
+
+        int beginIndex = 0;
+        int endIndex = this.IncrementTextLengthVal;
+        int StringLength = str1.length();
+
+        if (StringLength <= this.IncrementTextLengthVal) {
+            separatedStringList.add(str1.substring(beginIndex));
+        }
+        else {
+            while (StringLength > this.IncrementTextLengthVal) {
+                separatedStringList.add(str1.substring(beginIndex, endIndex));
+                StringLength -= this.IncrementTextLengthVal;
+                beginIndex += this.IncrementTextLengthVal;
+                endIndex += this.IncrementTextLengthVal;
+            }
+            separatedStringList.add(str1.substring(beginIndex));
+        }
+
+        return separatedStringList;
+    }
+
+    public void hideBtns() {
+        for (SBSImageButton tempBtn: this.ConfigName2SettingBtn.values()) {
+            removeWidget(tempBtn);
+        }
+    }
+    public void showBtns() {
+        for (SBSImageButton tempBtn: this.ConfigName2SettingBtn.values()) {
+            addRenderableWidget(tempBtn);
+        }
+    }
+
+    public boolean showSBSettingDetailsScreen() {
+        return this.showSBSettingDetailsScreen && this.LocalSBSettingDetailsScreen != null;
+    }
+
+    public void pressedSBDetailsSettingBtnAction(SBSettingDetailsScreen infoScreen) {
+        hideBtns();
+        this.showSBSettingDetailsScreen = true;
+        this.LocalSBSettingDetailsScreen = infoScreen;
+        this.LocalSBSettingDetailsScreen.init(getMinecraft(), width, height);
+    }
+
+    @Override
+    public void renderBackground(GuiGraphics guiGraphics) {
+        guiGraphics.fillGradient(0, 0, this.width, this.height, -0x50FFEFF0, -0x50FFEFF0);
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button != 0) {
+            super.mouseClicked(mouseX, mouseY, button);
+        }
+        if (this.showSBSettingDetailsScreen()) {
+            if (this.LocalSBSettingDetailsScreen.isMouseOver(mouseX, mouseY)) {
+                this.LocalSBSettingDetailsScreen.mouseClicked(mouseX, mouseY, button);
+            }
+            else {
+                this.showSBSettingDetailsScreen = false;
+            }
+            return false;
+        }
+
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+        if (this.showSBSettingDetailsScreen()) {
+            this.LocalSBSettingDetailsScreen.mouseScrolled(mouseX, mouseY, scroll);
+        }
+        else {
+            if (this.isAllSBSettingBtnsRendered) {
+                this.scrollDist = this.scrollDist + scroll;
+
+                if (this.scrollDist <= -512) {
+                    this.scrollDist = -511;
+                } else if (this.scrollDist >= 1) {
+                    this.scrollDist = 0;
+                }
+            }
+        }
+
+        return super.mouseScrolled(mouseX, mouseY, scroll);
+    }
+
+    @Override
+    public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
+        if (pKeyCode == GLFW.GLFW_KEY_SPACE || pKeyCode == GLFW.GLFW_KEY_ENTER) { return false; }
+
+        if (pKeyCode == GLFW.GLFW_KEY_ESCAPE) {
+            if (this.showSBSettingDetailsScreen()) {
+                showBtns();
+                this.showSBSettingDetailsScreen = false;
+                return false;
+            }
+            else {
+                return super.keyPressed(pKeyCode, pScanCode, pModifiers);
+            }
+        }
+        else {
+            return super.keyPressed(pKeyCode, pScanCode, pModifiers);
+        }
+    }
+}

@@ -1,0 +1,44 @@
+package net.dingdingduang.somebasicskills.networking.packet.key;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.function.Supplier;
+
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalClientPlayerValues.setCPlayerKeyCombo2SkillID;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalClientPlayerValues.setCPlayerSkillID2KeyCombo;
+
+public class FetchKeyComboSettingFromServer {
+    private HashMap<ArrayList<Integer>, String> ClientPlayerKeyCombo2SkillID;
+    private HashMap<String, ArrayList<Integer>> ClientPlayerSkillID2KeyCombo;
+
+    public FetchKeyComboSettingFromServer(HashMap<ArrayList<Integer>, String> KeyCombo2Skill,
+                                          HashMap<String, ArrayList<Integer>> Skill2KeyCombo) {
+        this.ClientPlayerKeyCombo2SkillID = KeyCombo2Skill;
+        this.ClientPlayerSkillID2KeyCombo = Skill2KeyCombo;
+    }
+
+    public FetchKeyComboSettingFromServer(FriendlyByteBuf buf) {
+        this.ClientPlayerKeyCombo2SkillID = buf.readMap(Maps::newHashMapWithExpectedSize, (buf2) -> buf2.readCollection(Lists::newArrayListWithCapacity, FriendlyByteBuf::readInt), FriendlyByteBuf::readUtf);
+        this.ClientPlayerSkillID2KeyCombo = buf.readMap(Maps::newHashMapWithExpectedSize, FriendlyByteBuf::readUtf, (buf2) -> buf2.readCollection(Lists::newArrayListWithCapacity, FriendlyByteBuf::readInt));
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+        buf.writeMap(this.ClientPlayerKeyCombo2SkillID, (buf2, arrIntList) -> buf2.writeCollection(arrIntList, FriendlyByteBuf::writeInt), FriendlyByteBuf::writeUtf);
+        buf.writeMap(this.ClientPlayerSkillID2KeyCombo, FriendlyByteBuf::writeUtf, (buf2, arrIntList) -> buf2.writeCollection(arrIntList, FriendlyByteBuf::writeInt));
+    }
+
+    public boolean handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            //do shiet on client side
+            setCPlayerKeyCombo2SkillID(this.ClientPlayerKeyCombo2SkillID);
+            setCPlayerSkillID2KeyCombo(this.ClientPlayerSkillID2KeyCombo);
+        });
+
+        return true;
+    }
+}

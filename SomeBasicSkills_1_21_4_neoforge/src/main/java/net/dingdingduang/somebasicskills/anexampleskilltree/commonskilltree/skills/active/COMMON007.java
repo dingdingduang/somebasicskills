@@ -1,0 +1,131 @@
+package net.dingdingduang.somebasicskills.anexampleskilltree.commonskilltree.skills.active;
+
+import net.dingdingduang.somebasicskills.Constants;
+import net.dingdingduang.somebasicskills.anexampleskilltree.commonskilltree.CommonSkillHelperMethods;
+import net.dingdingduang.somebasicskills.anexampleskilltree.commonskilltree.CommonSkillInitialization;
+import net.dingdingduang.somebasicskills.event.SBSTickEventMethods;
+import net.dingdingduang.somebasicskills.globalmethods.LocaleLanguageMethods;
+import net.dingdingduang.somebasicskills.skilldata.SkillDataJson;
+import net.dingdingduang.somebasicskills.util.MethodAction;
+
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+
+import java.util.HashMap;
+
+import static net.dingdingduang.somebasicskills.globalmethods.ServerSkillMethods.isEntityChannellingInterrupted;
+import static net.dingdingduang.somebasicskills.globalmethods.SoundMethods.*;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalClientPlayerValues.getCPlayerIsImmobilized;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalClientPlayerValues.getCPlayerState;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalServerLivingEntityValues.getSLivingEntityState;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalServerPlayerValues.getGlobalPlayerSkillID2lvlMap;
+import static net.dingdingduang.somebasicskills.gui.overlay.SkillsInCooldownClientTimerOverlay.getSkillsInCooldownClientTimerOverlayInstance;
+import static net.dingdingduang.somebasicskills.sbsattributes.TimedAttributesDistributor.applyTimedUninterruptibleChanceToEntity;
+import static net.dingdingduang.somebasicskills.skilldata.SkillDataInitialization.getID2SkillData;
+
+public class COMMON007 {
+    private static String getSkillDescription(SkillDataJson skillData, int currentSkillLevel) {
+        int correctSkillLevel = 0;
+        if (currentSkillLevel > 0) {
+            correctSkillLevel = currentSkillLevel - 1;
+        }
+        Double duration = skillData.getDuration().get(correctSkillLevel);
+        int UnInterruptibleChance = (int) (skillData.getValueUsage_01().get(correctSkillLevel) * 100);
+
+        return LocaleLanguageMethods.getTranslatableDescriptionWithArgs(skillData.getTranslatableTextDescription(),
+                String.format("%ss", duration),
+                String.format("%d%%", UnInterruptibleChance)
+        );
+    }
+
+    public static void init() {
+        SkillDataJson tempSkillData = getID2SkillData().get(CommonSkillInitialization.COMMON_007_INDOMITABLE_SPIRIT);
+        tempSkillData.setTranslatableTooltipGetter(COMMON007::getSkillDescription);
+
+        //condition: check to see if qualify before activate skill
+        tempSkillData.setClientConditionRequirement(
+                (SkillID2) -> {
+                    boolean isInCD = getSkillsInCooldownClientTimerOverlayInstance().isClientPlayerSkillInCD(SkillID2);
+                    boolean isInAction = false;
+                    if (getCPlayerState().containsKey(Constants.IS_IN_ACTION)) {
+                        isInAction = getCPlayerState().get(Constants.IS_IN_ACTION) >= Constants.ACTION_ON;
+                    }
+                    boolean isChanneling = false;
+                    if (getCPlayerState().containsKey(Constants.IS_CHANNELING)) {
+                        isChanneling = getCPlayerState().get(Constants.IS_CHANNELING) >= Constants.ACTION_ON;
+                    }
+                    boolean isOnGround = true;
+                    if (CommonSkillHelperMethods.helperGetClientPlayer() != null) {
+                        isOnGround = CommonSkillHelperMethods.helperGetEntityOnGround(CommonSkillHelperMethods.helperGetClientPlayer());
+                    }
+                    boolean isImmobilized = getCPlayerIsImmobilized();
+
+                    return !isInCD && !isInAction && !isChanneling && isOnGround && !isImmobilized;
+                }
+        );
+
+        //action while channeling on server side
+        MethodAction tempChannelingAction = (entity1) -> {
+            int actionPeriod = 3;
+            MethodAction action = (entity2) -> {
+                boolean contActioning = false;
+                HashMap<LivingEntity, HashMap<String, Integer>> ServerLivingEntityState = getSLivingEntityState();
+                if (ServerLivingEntityState.containsKey(entity2) && ServerLivingEntityState.get(entity2) != null) {
+                    contActioning = ServerLivingEntityState.get(entity2).get(Constants.IS_CHANNELING) == 1;
+                }
+                if (contActioning) {
+                    //play sound at target location while channeling
+                    PlaySBSChannelingSoundAtLocation(entity2.level(), entity2.getX(), entity2.getY(), entity2.getZ(), 0.25f, 1.0f);
+                }
+                else {
+                    //stop loop action
+                    SBSTickEventMethods.setSkillActionDone(entity2, CommonSkillInitialization.COMMON_007_INDOMITABLE_SPIRIT);
+                }
+            };
+
+            //start loop action
+            SBSTickEventMethods.setMethodActionTimer(entity1, CommonSkillInitialization.COMMON_007_INDOMITABLE_SPIRIT, actionPeriod, action);
+
+            //play entity animation
+            //...
+        };
+
+
+
+        MethodAction tempChannelingFinalAction =
+                (entity1) -> {
+                    //condition, if skill is interrupted, do not execute final action
+                    if (!isEntityChannellingInterrupted(entity1)) {
+                        double duration = 0.0, amount = 0.0;
+                        int playerSkillLVL = 0;
+                        SkillDataJson skill1 = getID2SkillData().get(CommonSkillInitialization.COMMON_007_INDOMITABLE_SPIRIT);
+                        if (entity1 instanceof ServerPlayer sp1) {
+                            if (getGlobalPlayerSkillID2lvlMap().get(sp1).containsKey(CommonSkillInitialization.COMMON_007_INDOMITABLE_SPIRIT)) {
+                                playerSkillLVL = getGlobalPlayerSkillID2lvlMap().get(sp1).get(CommonSkillInitialization.COMMON_007_INDOMITABLE_SPIRIT);
+                                if (playerSkillLVL <= 0) {
+                                    return;
+                                }
+                                duration = skill1.getDuration().get(playerSkillLVL - 1);
+                                amount = skill1.getValueUsage_01().get(playerSkillLVL - 1);
+                            }
+                        } else {
+                            duration = skill1.getDuration().get(playerSkillLVL);
+                            amount = skill1.getValueUsage_01().get(playerSkillLVL);
+                        }
+                        applyTimedUninterruptibleChanceToEntity(entity1, (int) (duration * 20), amount, Constants.OP_ADDITION, false, CommonSkillInitialization.COMMON_007_INDOMITABLE_SPIRIT, null, null);
+
+                        //play buff on sound
+                        PlaySBSChannelingFinishedSoundAtLocation(entity1.level(), entity1.getX(), entity1.getY(), entity1.getZ(), 0.6f, 1.0f);
+                    }
+                    else {
+                        PlaySBSChannelingFailedSoundAtLocation(entity1.level(), entity1.getX(), entity1.getY(), entity1.getZ(), 0.4f, 1.0f);
+                    }
+                };
+
+
+        //while channeling
+        tempSkillData.setChannelingSkillAction1(tempChannelingAction);
+        //final action
+        tempSkillData.setActiveSkillAction1(tempChannelingFinalAction);
+    }
+}

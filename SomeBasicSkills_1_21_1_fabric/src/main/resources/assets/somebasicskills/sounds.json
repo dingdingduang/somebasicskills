@@ -1,0 +1,26 @@
+{
+    "btn_activate_err": {
+        "category": "master",
+        "sounds": [ { "name": "somebasicskills:btn_activate_err" } ]
+    },
+    "btn_keyboard_err": {
+        "category": "master",
+        "sounds": [ { "name": "somebasicskills:btn_keyboard_err" } ]
+    },
+    "channelling_sound": {
+        "category": "neutral",
+        "sounds": [ { "name": "somebasicskills:channelling_sound" } ]
+    },
+    "channelling_finished_sound": {
+        "category": "neutral",
+        "sounds": [ { "name": "somebasicskills:channelling_finished_sound" } ]
+    },
+    "channelling_failed_sound": {
+        "category": "neutral",
+        "sounds": [ { "name": "somebasicskills:channelling_failed_sound" } ]
+    },
+    "common_0_1_leap": {
+        "category": "neutral",
+        "sounds": [ { "name": "somebasicskills:common_0_1_leap" } ]
+    }
+}

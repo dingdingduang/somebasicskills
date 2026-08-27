@@ -1,0 +1,107 @@
+package net.dingdingduang.somebasicskills.sbsattributes;
+
+import net.dingdingduang.somebasicskills.Constants;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.getMCResourceLocation;
+
+public class SBSAttributes {
+//    public static final DeferredRegister<Attribute> ATTRIBUTE_REGISTRY = DeferredRegister.create(BuiltInRegistries.ATTRIBUTE, Constants.MOD_ID);
+//
+//    public static void eventBusRegister(IEventBus eventBus) {
+//        ATTRIBUTE_REGISTRY.register(eventBus);
+//    }
+
+    private static Holder<Attribute> register(String pId, Attribute pAttribute) {
+//        return Registry.registerForHolder(BuiltInRegistries.ATTRIBUTE, getMCResourceLocation(Constants.MOD_ID, pId), pAttribute);
+        return Registry.registerForHolder(BuiltInRegistries.ATTRIBUTE, ResourceLocation.withDefaultNamespace(pId), pAttribute);
+    }
+
+    private static Attribute getMCAttribute(String pDescriptionID, double pDefaultVal) {
+//        return new RangedAttribute(pDescriptionID, pDefaultVal, 0, 65535);
+        return new SBSAttribute(pDescriptionID, pDefaultVal);
+    }
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_MAX_MP = register(Constants.MOD_ID, getMCAttribute("sbsattribute.max_mp", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ARMOR_PIERCE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.armor_pierce", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_PROTECTION_PIERCE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.protection_pierce", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_COOLDOWN = register(Constants.MOD_ID, getMCAttribute("sbsattribute.cooldown", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_CHANNELING = register(Constants.MOD_ID, getMCAttribute("sbsattribute.channeling", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_UNINTERRUPTIBLE_CHANCE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.uninterruptible_chance", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_INDEPENDENCE_DMG = register(Constants.MOD_ID, getMCAttribute("sbsattribute.independence_dmg", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_PHYSIC_CRIT_CHANCE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.physic_crit_chance", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_PHYSIC_CRIT_DAMAGE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.physic_crit_damage", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_MAGIC_DMG = register(Constants.MOD_ID, getMCAttribute("sbsattribute.magic_dmg", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_MAGIC_CRIT_CHANCE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.magic_crit_chance", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_MAGIC_CRIT_DAMAGE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.magic_crit_damage", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_BACKSTAB_DMG = register(Constants.MOD_ID, getMCAttribute("sbsattribute.backstab_dmg", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_PHYSIC_BACKSTAB_CRIT_CHANCE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.physic_backstab_crit_chance", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_PHYSIC_BACKSTAB_CRIT_DAMAGE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.physic_backstab_crit_damage", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_MAGIC_BACKSTAB_CRIT_CHANCE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.magic_backstab_crit_chance", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_MAGIC_BACKSTAB_CRIT_DAMAGE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.magic_backstab_crit_damage", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_SKILL_DMG = register(Constants.MOD_ID, getMCAttribute("sbsattribute.skill_dmg", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_EXTRA_DAMAGE_RECEIVED = register(Constants.MOD_ID, getMCAttribute("sbsattribute.extra_damage_received", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_EFFECT_AREA = register(Constants.MOD_ID, getMCAttribute("sbsattribute.effect_area", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_DURATION = register(Constants.MOD_ID, getMCAttribute("sbsattribute.duration", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_DISTANCE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.distance", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_STATIONARY = register(Constants.MOD_ID, getMCAttribute("sbsattribute.stationary", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_BENEFICIAL_STATUS_INVINCIBILITY = register(Constants.MOD_ID, getMCAttribute("sbsattribute.beneficial_status_invincibility", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_BENEFICIAL_STATUS_SUPER_ARMOR = register(Constants.MOD_ID, getMCAttribute("sbsattribute.beneficial_status_super_armor", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_BLEEDING = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_bleeding", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_SHOCK = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_shock", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_FREEZE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_freeze", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_BURN = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_burn", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_CURSED = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_cursed", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_DISARM = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_disarm", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_IMMOBILIZATION = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_immobilization", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_SLEEP = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_sleep", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_CONFUSION = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_confusion", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_STUN = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_stun", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_ALL_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_all_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_BLEEDING_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_bleeding_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_SHOCK_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_shock_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_FREEZE_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_freeze_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_BURN_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_burn_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_CURSED_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_cursed_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_DISARM_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_disarm_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ABNORMAL_STATUS_STUN_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.abnormal_status_stun_resist", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ALL_DMG_REDUCTION = register(Constants.MOD_ID, getMCAttribute("sbsattribute.all_dmg_reduction", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_PHYSIC_DMG_REDUCTION = register(Constants.MOD_ID, getMCAttribute("sbsattribute.physic_dmg_reduction", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_MAGIC_DMG_REDUCTION = register(Constants.MOD_ID, getMCAttribute("sbsattribute.magic_dmg_reduction", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_LIGHT = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_light", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_DARKNESS = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_darkness", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_METAL = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_metal", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_WOOD = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_wood", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_EARTH = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_earth", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_FIRE = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_fire", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_AIR = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_air", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_WATER = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_water", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_LIGHT_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_light_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_DARKNESS_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_darkness_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_METAL_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_metal_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_WOOD_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_wood_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_EARTH_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_earth_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_FIRE_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_fire_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_AIR_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_air_resist", 0.0));
+    public static final Holder<Attribute> SBS_ATTRIBUTE_ELEMENT_WATER_RESIST = register(Constants.MOD_ID, getMCAttribute("sbsattribute.element_water_resist", 0.0));
+
+    public static final Holder<Attribute> SBS_ATTRIBUTE_BEING_ATTACKED = register(Constants.MOD_ID, getMCAttribute("sbsattribute.being_attacked", 0.0));
+}

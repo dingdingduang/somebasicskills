@@ -1,0 +1,39 @@
+package net.dingdingduang.somebasicskills.networking.packet.skill;
+
+import com.google.common.collect.Maps;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.HashMap;
+import java.util.function.Supplier;
+
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.getMinecraftInstance;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalClientPlayerValues.getClientPlayerSkillID2lvlMap;
+
+public class FetchSkillLevelFromServer {
+    private HashMap<String, Integer> SkillID2LVL;
+
+    public FetchSkillLevelFromServer(HashMap<String, Integer> a) {
+        this.SkillID2LVL = a;
+    }
+
+    public FetchSkillLevelFromServer(FriendlyByteBuf buf) {
+        this.SkillID2LVL = buf.readMap(Maps::newHashMapWithExpectedSize, FriendlyByteBuf::readUtf, FriendlyByteBuf::readInt);
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+        buf.writeMap(this.SkillID2LVL, FriendlyByteBuf::writeUtf, FriendlyByteBuf::writeInt);
+    }
+
+    public boolean handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            //do shiet on client side
+            Player cp1 = getMinecraftInstance().player;
+
+            getClientPlayerSkillID2lvlMap().put(cp1, this.SkillID2LVL);
+        });
+
+        return true;
+    }
+}

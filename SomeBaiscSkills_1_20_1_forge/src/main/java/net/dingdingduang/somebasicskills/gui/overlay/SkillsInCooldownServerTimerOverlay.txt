@@ -1,0 +1,154 @@
+package net.dingdingduang.somebasicskills.gui.overlay;
+
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.client.gui.overlay.ForgeGui;
+import net.minecraftforge.client.gui.overlay.IGuiOverlay;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
+
+//import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.getMinecraftServerInstance;
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.printInGameMsg;
+import static net.dingdingduang.somebasicskills.globalmethods.ServerPlayerMethods.getServerPlayerByUUID;
+import static net.dingdingduang.somebasicskills.sbsattributes.statusquery.AttributeServerPlayerStatusQueryMethods.*;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalServerPlayerValues.getGlobalPlayerSkillID2lvlMap;
+import static net.dingdingduang.somebasicskills.skilldata.SkillDataInitialization.getID2SkillData;
+
+public class SkillsInCooldownServerTimerOverlay implements IGuiOverlay {
+    private boolean isCooldownTimerActive = false;
+    private static final SkillsInCooldownServerTimerOverlay SERVER_SKILLS_IN_COOLDOWN_OVERLAY_INSTANCE = new SkillsInCooldownServerTimerOverlay();
+
+    //20 ticks = 1 sec
+//    private final int Ticks2Sec = 20;
+
+    //failed to forestall players' inevitable cheating by relogining to refresh cooldown
+    private HashMap<UUID, HashMap<String, Integer>> PlayerSkillID2CooldownTicks;
+    private HashMap<UUID, HashMap<String, Double>> PlayerSkillID2TotalCooldownTicks;
+
+    @Override
+    public void render(ForgeGui forgeGui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
+        if (this.isCooldownTimerActive) {
+            ArrayList<ServerPlayer> playersToBeRemoved = new ArrayList<ServerPlayer>();
+
+            HashMap<String, Integer> SkillID2CooldownTicks;
+            HashMap<ServerPlayer, HashMap<String, Integer>> PlayerSkillID2lvlMap = getGlobalPlayerSkillID2lvlMap();
+            int skillTickElapsed;
+            double skillCooldownTime;
+            ArrayList<String> skillsToBeRemoved = new ArrayList<String>();
+
+            for (UUID sp1_UUID : this.PlayerSkillID2CooldownTicks.keySet()) {
+                ServerPlayer sp1 = getServerPlayerByUUID(sp1_UUID);
+                if (!PlayerSkillID2lvlMap.containsKey(sp1)) { continue; }
+
+                SkillID2CooldownTicks = this.PlayerSkillID2CooldownTicks.get(sp1_UUID);
+                for (String skillID: SkillID2CooldownTicks.keySet()) {
+                    skillTickElapsed = SkillID2CooldownTicks.get(skillID);
+                    skillCooldownTime = this.PlayerSkillID2TotalCooldownTicks.get(sp1_UUID).get(skillID);
+
+                    if (skillTickElapsed > skillCooldownTime) {
+                        skillsToBeRemoved.add(skillID);
+                    }
+                    else {
+                        SkillID2CooldownTicks.put(skillID, skillTickElapsed +1);
+                    }
+                }
+
+                //remove skill no longer in CD
+                for (String skillIDTBR: skillsToBeRemoved) {
+                    SkillID2CooldownTicks.remove(skillIDTBR);
+                }
+                if (SkillID2CooldownTicks.size() <= 0) {
+                    playersToBeRemoved.add(sp1);
+                }
+            }
+
+            UUID tempUUID;
+            //close timer if no player's skill in used
+            for (ServerPlayer sp1: playersToBeRemoved) {
+                tempUUID = sp1.getUUID();
+                this.PlayerSkillID2CooldownTicks.remove(tempUUID);
+                this.PlayerSkillID2TotalCooldownTicks.remove(tempUUID);
+            }
+            if (this.PlayerSkillID2CooldownTicks.size() <= 0) {
+                this.isCooldownTimerActive = false;
+            }
+        }
+    }
+
+    public boolean isCooldownTimerActive() { return this.isCooldownTimerActive; }
+    public void setCooldownTimer(boolean a, ServerPlayer sp1, String skillID) {
+//        if (getMinecraftServerInstance() == null) { return; }
+        //if lvl 0, dont trigger
+        HashMap<ServerPlayer, HashMap<String, Integer>> PlayerSkillID2lvlMap = getGlobalPlayerSkillID2lvlMap();
+        if (!PlayerSkillID2lvlMap.containsKey(sp1)) { return; }
+        if (!PlayerSkillID2lvlMap.get(sp1).containsKey(skillID)) { return; }
+        //if current lvl is 0, return
+        int skillCurrentLVL = PlayerSkillID2lvlMap.get(sp1).get(skillID);
+        if (skillCurrentLVL <= 0) { return; }
+
+        //setup cooldown timer for current player
+        if (this.PlayerSkillID2CooldownTicks == null) {
+            this.PlayerSkillID2CooldownTicks = new HashMap<UUID, HashMap<String, Integer>>();
+            this.PlayerSkillID2TotalCooldownTicks = new HashMap<UUID, HashMap<String, Double>>();
+        }
+        this.isCooldownTimerActive = a;
+
+        UUID sp1_UUID = sp1.getUUID();
+
+        if (!this.PlayerSkillID2CooldownTicks.containsKey(sp1_UUID)) {
+            this.PlayerSkillID2CooldownTicks.put(sp1_UUID, new HashMap<String, Integer>());
+            this.PlayerSkillID2TotalCooldownTicks.put(sp1_UUID, new HashMap<String, Double>());
+        }
+
+        if (!this.PlayerSkillID2CooldownTicks.get(sp1_UUID).containsKey(skillID)) {
+            HashMap<String, Integer> tempMap;
+            HashMap<String, Double> tempMap2;
+            //skillCurrentLVL - 1, arraylist index
+            double skillTotalCD =
+                    ( (getID2SkillData().get(skillID).getCooldownTime().get(skillCurrentLVL-1)
+                    +getSPlayerCooldownBase(sp1)
+                    +getSPlayerTemporaryCooldownBase(sp1)) * (1.0
+                    +getSPlayerCooldownMultiplier(sp1)
+                    +getSPlayerTemporaryCooldownMultiplier(sp1)) )
+                    *20;
+
+//            if (this.PlayerSkillID2CooldownTicks.containsKey(sp1_UUID)) {
+//                tempMap = this.PlayerSkillID2CooldownTicks.get(sp1_UUID);
+//            }
+//            else {
+//                tempMap = new HashMap<String, Integer>();
+//            }
+            tempMap = this.PlayerSkillID2CooldownTicks.get(sp1_UUID);
+            tempMap.put(skillID, 0);
+            this.PlayerSkillID2CooldownTicks.put(sp1_UUID, tempMap);
+
+            tempMap2 = this.PlayerSkillID2TotalCooldownTicks.get(sp1_UUID);
+            tempMap2.put(skillID, skillTotalCD);
+            this.PlayerSkillID2TotalCooldownTicks.put(sp1_UUID, tempMap2);
+        }
+//        else {
+////            printInGameMsg(skilldata.getSkillID()+" already in cooldown!");
+//            printInGameMsg(getLocalizationText("somebasicskills.skill.title."+skilldata.getSkillID())+" already in cooldown!");
+//        }
+    }
+
+    public boolean isPlayerSkillInCD(ServerPlayer sp1, String skillID) {
+        if (this.PlayerSkillID2CooldownTicks != null && this.PlayerSkillID2CooldownTicks.containsKey(sp1.getUUID())) {
+//            if (this.PlayerSkillID2CooldownTicks.get(sp1.getUUID()).containsKey(skill1)) {
+//                return true;
+//            }
+            return this.PlayerSkillID2CooldownTicks.get(sp1.getUUID()).containsKey(skillID);
+        }
+        return false;
+    }
+
+    public HashMap<UUID, HashMap<String, Integer>> getPlayerSkillID2CooldownTicks() {
+        return this.PlayerSkillID2CooldownTicks;
+    }
+
+    public static SkillsInCooldownServerTimerOverlay getSkillsInCooldownServerTimerOverlayInstance() {
+        return SERVER_SKILLS_IN_COOLDOWN_OVERLAY_INSTANCE;
+    }
+}

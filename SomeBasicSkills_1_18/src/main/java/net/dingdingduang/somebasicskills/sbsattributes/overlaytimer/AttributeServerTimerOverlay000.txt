@@ -1,0 +1,303 @@
+package net.dingdingduang.somebasicskills.sbsattributes.overlaytimer;
+
+import net.dingdingduang.somebasicskills.sbsattributes.AttributeHelper;
+import net.dingdingduang.somebasicskills.sbsattributes.AttributePrimitiveOnly;
+import net.dingdingduang.somebasicskills.sbsattributes.UniqueAttributePrimitiveOnly;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraftforge.client.gui.ForgeIngameGui;
+net.minecraftforge.client.gui.IIngameOverlay;
+
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.HashSet;
+import java.util.UUID;
+
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalServerPlayerValues.getSPlayerValue2BaseMultiplierMap;
+
+//(OPTIONAL): check effect icon if living entity has one, when is removed by drinking milk or something, remove attr
+//Server side only
+public class AttributeServerTimerOverlay implements IGuiOverlay {
+    private boolean isAttributeServerTimerActive = false;
+    private static final AttributeServerTimerOverlay ATTRIBUTES_SERVER_TIMER_OVERLAY_TIMER = new AttributeServerTimerOverlay();
+
+    //20 ticks = 1 sec
+//    private final int Ticks2Sec = 20;
+
+    private int timer = -1;
+    //set period to 10 because of terrible nested loop
+    private final int period = 10;
+
+    //TODO: remove living entity from hashtable once they die
+    //remove timed attr by ticks
+    private Hashtable<LivingEntity, HashMap<String, AttributeHelper>> ServerEntityAttrName2AttrHelper;
+    //attrname+opInt as key matched final value for base/multiplier
+    private Hashtable<LivingEntity, HashMap<String, Double>> ServerEntityAttrNameWithOP2FinalValue;
+
+    @Override
+    public void render(ForgeGui forgeGui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
+        if (this.isAttributeServerTimerActive) {
+            if (this.timer % period == 0) {
+                this.timer = 0;
+                HashSet<LivingEntity> entityToBeRemovedSet = new HashSet<LivingEntity>();
+                HashSet<String> attributeToBeRemovedSet = new HashSet<String>();
+                HashSet<AttributePrimitiveOnly> attributePrimToBeRemovedSet = new HashSet<AttributePrimitiveOnly>();
+                HashMap<String, AttributeHelper> tempAttr2AttrHelper;
+                AttributeHelper tempAttrHelper;
+                AttributeModifier tempAttrModifier;
+                int remaingTime;
+                for (LivingEntity entity : this.ServerEntityAttrName2AttrHelper.keySet()) {
+                    tempAttr2AttrHelper = this.ServerEntityAttrName2AttrHelper.get(entity);
+
+                    for (String attrNameWithSkillIDPostfix : tempAttr2AttrHelper.keySet()) {
+                        tempAttrHelper = tempAttr2AttrHelper.get(attrNameWithSkillIDPostfix);
+
+                        HashMap<AttributePrimitiveOnly, Integer> tempAttrPrimMap = tempAttrHelper.getAttributePrimitive2Index();
+
+                        //UGLY nested loop, OMG how do I improve this shiet
+                        for (AttributePrimitiveOnly tempAttrPrimitive: tempAttrPrimMap.keySet()) {
+                            tempAttrModifier = tempAttrHelper.getAttrModifier();
+                            remaingTime = tempAttrPrimitive.getTimeTicks() - period;
+                            tempAttrPrimitive.setTimeTicks(remaingTime);
+//                            printInGameMsg("remaingingTime: "+remaingTime);
+
+                            //do something if AttributePrimitiveOnly has something special like emit particle effect
+                            if (tempAttrPrimitive.getAttributeMethodAction() != null) {
+                                tempAttrPrimitive.getAttributeMethodAction().executeAction(entity);
+                            }
+
+                            if (remaingTime <= 0) {
+                                attributePrimToBeRemovedSet.add(tempAttrPrimitive);
+                                Attribute tempAttrType = tempAttrHelper.getAttrType();
+                                String tempAttrTypeOpString = tempAttrType.getDescriptionId()+tempAttrModifier.getOperation().toValue();
+                                double updateAmount = this.ServerEntityAttrNameWithOP2FinalValue.get(entity).get(tempAttrTypeOpString)-tempAttrPrimitive.getAmount();
+                                //update
+                                AttributeModifier updateAttr = new AttributeModifier(tempAttrModifier.getId(),
+                                        tempAttrModifier.getName(),
+                                        updateAmount,
+                                        tempAttrModifier.getOperation());
+
+                                //test find problem
+//                                if (tempAttrModifier.getOperation().toValue() == 1) {
+//                                    printInGameMsg("final: " + updateAmount+", tempAmount: "+tempAttrPrimitive.getAmount()+", previous amount: "+this.ServerEntityAttrNameWithOP2FinalValue.get(entity).get(tempAttrTypeOpString));
+//                                    printInGameMsg("op: " + tempAttrTypeOpString);
+//                                }
+                                this.ServerEntityAttrNameWithOP2FinalValue.get(entity).put(tempAttrTypeOpString, updateAmount);
+
+                                if (entity instanceof ServerPlayer sp1) {
+                                    String playerStatusName = tempAttrPrimitive.getAttrName();
+                                    //ASSUME getSPlayerValue2BaseMultiplierMap() is not null simpy because it is initialized and should never be null unless server is offline
+                                    HashMap<String, Double> tempPlayerStatusMap = getSPlayerValue2BaseMultiplierMap().get(sp1);
+                                    //add status value based on given attr i.e. HP ATK SPEED
+                                    if (tempPlayerStatusMap.containsKey(playerStatusName)) {
+//                                        tempPlayerStatusMap.put(playerStatusName, amount+tempPlayerStatusMap.get(playerStatusName));
+                                        tempPlayerStatusMap.put(playerStatusName, updateAmount);
+                                    }
+                                }
+
+                                AttributeInstance tempAttrInstance = entity.getAttribute(tempAttrType);
+                                if (tempAttrInstance != null) {
+                                    boolean isAttrTypeHealth = false;
+                                    float EntityHP_Percent = 0.01f;
+
+                                    //prevent abusing health
+                                    if (tempAttrHelper.getAttrType() == Attributes.MAX_HEALTH) {
+                                        isAttrTypeHealth = true;
+                                        EntityHP_Percent = entity.getHealth() / entity.getMaxHealth();
+                                    }
+                                    //vvvvvvvvvvvvvvvvvvv
+                                    if (tempAttrInstance.hasModifier(updateAttr)) {
+                                        tempAttrInstance.removeModifier(updateAttr);
+                                    }
+                                    double absUpdateAmount = Math.abs(updateAmount);
+                                    if (absUpdateAmount > 0.001 || Math.round(absUpdateAmount) > 0) {
+                                        tempAttrInstance.addTransientModifier(updateAttr);
+                                    }
+//                                    if (updateAmount > 0) {
+//                                        tempAttrInstance.addTransientModifier(updateAttr);
+//                                    }
+                                    //^^^^^^^^^^^^^^^^^^^
+                                    if (isAttrTypeHealth) {
+                                        entity.setHealth(EntityHP_Percent*entity.getMaxHealth());
+                                    }
+
+                                    //put return previous key
+//                                    tempAttrModifier = this.ServerEntityAttrName2FinalAttrValue.get(entity).put(attrNameWithSkillIDPostfix, updateAttr);
+
+                                    tempAttrHelper.setAttrModifier(updateAttr);
+                                }
+                            }
+                        }
+
+                        for (AttributePrimitiveOnly attrPrim: attributePrimToBeRemovedSet) {
+                            tempAttrPrimMap.remove(attrPrim);
+                        }
+
+                        if (tempAttrPrimMap.isEmpty()) {
+                            attributeToBeRemovedSet.add(attrNameWithSkillIDPostfix);
+                        }
+                    }
+
+                    for (String attrNameWithSkillIDPostfixTBR: attributeToBeRemovedSet) {
+                        tempAttr2AttrHelper.remove(attrNameWithSkillIDPostfixTBR);
+                    }
+                    if (tempAttr2AttrHelper.isEmpty()) {
+                        entityToBeRemovedSet.add(entity);
+                    }
+                }
+                for (LivingEntity entityTBR: entityToBeRemovedSet) {
+                    this.ServerEntityAttrName2AttrHelper.remove(entityTBR);
+                    this.ServerEntityAttrNameWithOP2FinalValue.remove(entityTBR);
+                }
+                if (this.ServerEntityAttrName2AttrHelper.isEmpty()) {
+//                    printInGameMsg("expired timer");
+                    this.isAttributeServerTimerActive = false;
+                    this.ServerEntityAttrName2AttrHelper = null;
+                    this.ServerEntityAttrNameWithOP2FinalValue = null;
+                    this.timer = -1;
+                }
+            }
+            this.timer++;
+        }
+    }
+
+//    private void applyShietOnEntity(LivingEntity entity) {
+//
+//    }
+
+    public boolean isAttributeServerTimerActive() { return this.isAttributeServerTimerActive; }
+    public double setUniqueAttributeServerTimer(boolean a, LivingEntity entity, UUID attrUUID, String attrName, Attribute attrType, AttributePrimitiveOnly attrPrimitive, AttributeModifier.Operation op, String SkillID) {
+        this.isAttributeServerTimerActive = a;
+        if (this.timer == -1) { this.timer = 0; }
+        if (this.ServerEntityAttrName2AttrHelper == null) {
+            this.ServerEntityAttrName2AttrHelper = new Hashtable<LivingEntity, HashMap<String, AttributeHelper>>();
+            this.ServerEntityAttrNameWithOP2FinalValue = new Hashtable<LivingEntity, HashMap<String, Double>>();
+        }
+        if (!this.ServerEntityAttrName2AttrHelper.containsKey(entity)) {
+            this.ServerEntityAttrName2AttrHelper.put(entity, new HashMap<String, AttributeHelper>());
+            this.ServerEntityAttrNameWithOP2FinalValue.put(entity, new HashMap<String, Double>());
+        }
+        String attrNameWithSkillIDPostfix = attrName + SkillID;
+        HashMap<String, AttributeHelper> PlayerAttr = this.ServerEntityAttrName2AttrHelper.get(entity);
+
+//        String attrNameWithSkillIDPostfix = attrType.getDescriptionId();
+        if (!PlayerAttr.containsKey(attrNameWithSkillIDPostfix)) {
+            PlayerAttr.put(attrNameWithSkillIDPostfix, new AttributeHelper(attrType));
+        }
+
+        AttributeHelper tempAttributeHelper = PlayerAttr.get(attrNameWithSkillIDPostfix), tempAttributeHelper2;
+        HashMap<AttributePrimitiveOnly, Integer> tempAttrModifierMap = tempAttributeHelper.getAttributePrimitive2Index();
+//        tempAttrModifierMap.put(attrPrimitive, tempAttrModifierMap.size());
+        UniqueAttributePrimitiveOnly tempUnique = new UniqueAttributePrimitiveOnly(attrPrimitive.getAmount(), attrPrimitive.getTimeTicks(), op.toValue(), attrPrimitive.getAttrUUID(), attrName, SkillID);
+        tempAttrModifierMap.remove(tempUnique);
+        tempAttrModifierMap.put(tempUnique, tempAttrModifierMap.size());
+
+        //calculate final Attr Value
+        double FinalValue = 0.0;
+        int operationInt = op.toValue();
+        for (String PlayerAttrAttrName: PlayerAttr.keySet()) {
+            tempAttributeHelper2 = PlayerAttr.get(PlayerAttrAttrName);
+            tempAttrModifierMap = tempAttributeHelper2.getAttributePrimitive2Index();
+            for (AttributePrimitiveOnly tempAttrPrimitive : tempAttrModifierMap.keySet()) {
+                if (tempAttrPrimitive.getAttrUUID().equals(attrUUID)) {
+                    FinalValue += tempAttrPrimitive.getAmount();
+                }
+            }
+        }
+//        printInGameMsg("new final: "+FinalValue);
+        this.ServerEntityAttrNameWithOP2FinalValue.get(entity).put(attrType.getDescriptionId()+operationInt, FinalValue);
+
+
+        AttributeModifier tempAttr = new AttributeModifier(attrUUID, attrNameWithSkillIDPostfix, FinalValue, op);
+        tempAttributeHelper.setAttrModifier(tempAttr);
+
+        AttributeInstance tempAttrInstance = entity.getAttribute(attrType);
+        boolean isAttrTypeHealth = false;
+        float EntityHP_Percent = 0.01f;
+        if (tempAttrInstance != null) {
+            //prevent abusing health
+            if (attrType == Attributes.MAX_HEALTH) {
+                isAttrTypeHealth = true;
+                EntityHP_Percent = entity.getHealth() / entity.getMaxHealth();
+            }
+            //vvvvvvvvvvvvvvvvvvv
+            if (tempAttrInstance.hasModifier(tempAttr)) {
+                tempAttrInstance.removeModifier(tempAttr);
+            }
+            tempAttrInstance.addTransientModifier(tempAttr);
+            //^^^^^^^^^^^^^^^^^^
+            if (isAttrTypeHealth) {
+                entity.setHealth(EntityHP_Percent*entity.getMaxHealth());
+            }
+        }
+        return FinalValue;
+    }
+    public void setAttributeDupServerTimer(boolean a, LivingEntity entity, UUID attrUUID, String attrName, Attribute attrType, AttributePrimitiveOnly attrPrimitive, AttributeModifier.Operation op, String SkillID) {
+        this.isAttributeServerTimerActive = a;
+        if (this.timer == -1) { this.timer = 0; }
+        if (this.ServerEntityAttrName2AttrHelper == null) {
+            this.ServerEntityAttrName2AttrHelper = new Hashtable<LivingEntity, HashMap<String, AttributeHelper>>();
+            this.ServerEntityAttrNameWithOP2FinalValue = new Hashtable<LivingEntity, HashMap<String, Double>>();
+        }
+        if (!this.ServerEntityAttrName2AttrHelper.containsKey(entity)) {
+            this.ServerEntityAttrName2AttrHelper.put(entity, new HashMap<String, AttributeHelper>());
+            this.ServerEntityAttrNameWithOP2FinalValue.put(entity, new HashMap<String, Double>());
+        }
+        String attrNameWithSkillIDPostfix = attrName + SkillID;
+        HashMap<String, AttributeHelper> PlayerAttr = this.ServerEntityAttrName2AttrHelper.get(entity);
+
+        if (!PlayerAttr.containsKey(attrNameWithSkillIDPostfix)) {
+            PlayerAttr.put(attrNameWithSkillIDPostfix, new AttributeHelper(attrType));
+        }
+
+        AttributeHelper tempAttributeHelper = PlayerAttr.get(attrNameWithSkillIDPostfix), tempAttributeHelper2;
+        HashMap<AttributePrimitiveOnly, Integer> tempAttrModifierMap = tempAttributeHelper.getAttributePrimitive2Index();
+        tempAttrModifierMap.put(attrPrimitive, tempAttrModifierMap.size());
+
+        //calculate final Attr Value
+        double FinalValue = 0.0;
+        int operationInt = op.toValue();
+        for (String PlayerAttrAttrName: PlayerAttr.keySet()) {
+            tempAttributeHelper2 = PlayerAttr.get(PlayerAttrAttrName);
+            tempAttrModifierMap = tempAttributeHelper2.getAttributePrimitive2Index();
+            for (AttributePrimitiveOnly tempAttrPrimitive : tempAttrModifierMap.keySet()) {
+                if (tempAttrPrimitive.getAttrUUID().equals(attrUUID)) {
+                    FinalValue += tempAttrPrimitive.getAmount();
+                }
+            }
+        }
+//        printInGameMsg("new final: "+FinalValue);
+        this.ServerEntityAttrNameWithOP2FinalValue.get(entity).put(attrType.getDescriptionId()+operationInt, FinalValue);
+
+        AttributeModifier tempAttr = new AttributeModifier(attrUUID, attrNameWithSkillIDPostfix, FinalValue, op);
+        tempAttributeHelper.setAttrModifier(tempAttr);
+
+        AttributeInstance tempAttrInstance = entity.getAttribute(attrType);
+        boolean isAttrTypeHealth = false;
+        float EntityHP_Percent = 0.01f;
+        if (tempAttrInstance != null) {
+            if (attrType == Attributes.MAX_HEALTH) {
+                isAttrTypeHealth = true;
+                EntityHP_Percent = entity.getHealth() / entity.getMaxHealth();
+            }
+            //vvvvvvvvvvvvvvvvvvv
+            if (tempAttrInstance.hasModifier(tempAttr)) {
+                tempAttrInstance.removeModifier(tempAttr);
+            }
+            tempAttrInstance.addTransientModifier(tempAttr);
+            //^^^^^^^^^^^^^^^^^^
+            if (isAttrTypeHealth) {
+                entity.setHealth(EntityHP_Percent*entity.getMaxHealth());
+            }
+        }
+    }
+
+    public static AttributeServerTimerOverlay getAttributeServerTimerOverlayInstance() {
+        return ATTRIBUTES_SERVER_TIMER_OVERLAY_TIMER;
+    }
+}

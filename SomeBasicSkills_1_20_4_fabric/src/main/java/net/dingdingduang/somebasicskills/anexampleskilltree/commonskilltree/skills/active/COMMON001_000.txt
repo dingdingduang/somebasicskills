@@ -1,0 +1,185 @@
+package net.dingdingduang.somebasicskills.anexampleskilltree.commonskilltree.skills.active;
+
+import net.dingdingduang.somebasicskills.Constants;
+import net.dingdingduang.somebasicskills.globalvalues.GlobalServerLivingEntityValues;
+import net.dingdingduang.somebasicskills.skilldata.SkillDataJson;
+import net.dingdingduang.somebasicskills.util.MethodAction;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.Mth;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.HashMap;
+
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.getMinecraftInstance;
+import static net.dingdingduang.somebasicskills.globalmethods.ServerSkillMethods.SendPacketIsInActionToClientSideFromServer;
+import static net.dingdingduang.somebasicskills.globalmethods.ServerSkillMethods.ServerUpdateLivingEntityState;
+import static net.dingdingduang.somebasicskills.globalmethods.SoundMethods.*;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalClientPlayerValues.getCPlayerState;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalServerPlayerValues.getGlobalPlayerSkillID2lvlMap;
+import static net.dingdingduang.somebasicskills.gui.overlay.SkillsInCooldownClientTimerOverlay.getSkillsInCooldownClientTimerOverlayInstance;
+import static net.dingdingduang.somebasicskills.registries.SoundRegistry.COMMON_0_1_LEAP_SOUND;
+import static net.dingdingduang.somebasicskills.sbsattributes.TimedAttributesDistributor.*;
+import static net.dingdingduang.somebasicskills.skilldata.SkillDataInitialization.getID2SkillData;
+import static net.dingdingduang.somebasicskills.util.ClientMethodActionTimerOverlay.getMethodActionTimerOverlayInstance;
+
+public class COMMON001 {
+    public static HashMap<LivingEntity, Float> COMMON001_HashMapTotalDistTraveled;
+    public static HashMap<LivingEntity, Integer> COMMON001_HashMapPassedTicks;
+
+    public static void init() {
+        String SkillID = "COMMON_0_1";
+        SkillDataJson tempSkillData = getID2SkillData().get(SkillID);
+
+        //init
+        if (COMMON001_HashMapTotalDistTraveled == null) {
+            COMMON001_HashMapTotalDistTraveled = new HashMap<>();
+            COMMON001_HashMapPassedTicks = new HashMap<>();
+        }
+
+
+
+        //====================================
+        //set skill condition
+//        default condition: getID2SkillData().get(SkillID).setClientConditionRequirement(SkillMethods::DefaultSkillCondition);
+        //setup customize condition requirement
+        //check on ground, on fire, on air, being hit, or whatever
+        getID2SkillData().get(SkillID).setClientConditionRequirement(
+                (SkillID2) -> {
+                    boolean isInCD = getSkillsInCooldownClientTimerOverlayInstance().isClientPlayerSkillInCD(SkillID2);
+                    boolean isInAction = false;
+                    if (getCPlayerState().containsKey(Constants.IS_IN_ACTION)) {
+                        isInAction = getCPlayerState().get(Constants.IS_IN_ACTION) >= Constants.ACTION_ON;
+                    }
+                    boolean isChanneling = false;
+                    if (getCPlayerState().containsKey(Constants.IS_CHANNELING)) {
+                        isChanneling = getCPlayerState().get(Constants.IS_CHANNELING) >= Constants.ACTION_ON;
+                    }
+                    boolean isOnGround = true;
+                    if (getMinecraftInstance().player != null) {
+                        isOnGround = getMinecraftInstance().player.isOnGround();
+                    }
+
+                    if (!isInCD && !isInAction && !isChanneling && isOnGround) {
+                        getCPlayerState().put(Constants.IS_BACKSTEPPING, Constants.ACTION_ON);
+                        return true;
+                    }
+                    return false;
+//                    return !isInCD && !isInAction && !isChanneling && isOnGround;
+                }
+        );
+
+
+
+        //====================================
+        //setup skill action
+        MethodAction tempSkillAction =
+                (entity1) -> {
+                    int duration;
+                    int playerSkillLVL = 0;
+                    float dist;
+                    GlobalServerLivingEntityValues.PutStateOnLivingEntity(entity1, Constants.IS_BACKSTEPPING, Constants.ACTION_ON);
+                    //ASSUME COMMON001_HashMapTotalDistTraveled never be null
+                    COMMON001_HashMapTotalDistTraveled.put(entity1, 0f);
+                    COMMON001_HashMapPassedTicks.put(entity1, 0);
+                    //IMPORTANT! setup action on to prevent casting other skills while this action
+                    //being performed
+                    SendPacketIsInActionToClientSideFromServer(entity1, Constants.ACTION_ON);
+
+                    SkillDataJson skill1 = getID2SkillData().get(SkillID);
+                    //future plan, character panel info
+                    if (entity1 instanceof ServerPlayerEntity sp1) {
+                        if (getGlobalPlayerSkillID2lvlMap().get(sp1).containsKey(SkillID)) {
+                            playerSkillLVL = getGlobalPlayerSkillID2lvlMap().get(sp1).get(SkillID);
+                            if (playerSkillLVL <= 0) { return; }
+                            playerSkillLVL = playerSkillLVL - 1;
+                        }
+                    }
+                    duration = (int) (skill1.getDuration().get(playerSkillLVL) * 20);
+                    dist = skill1.getValueUsage_01().get(playerSkillLVL).floatValue();
+
+                    applyTimedBeneficialStatusInvincibilityToEntity(entity1, duration, skill1.getDuration().get(playerSkillLVL - 1), Constants.OP_ADDITION, false, SkillID, null, null);
+                    applyTimedKnockbackResistToEntity(entity1, duration, 10.0, Constants.OP_ADDITION, false, SkillID, null, null);
+
+                    //play skill sound at target location
+                    PlaySoundAtLocation(COMMON_0_1_LEAP_SOUND.get(), entity1.getWorld(), entity1.getX(), entity1.getY(), entity1.getZ(), 0.5f, 1.0f);
+
+                    //VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+                    //start Actioning
+                    float finalDist = dist;
+                    int finalTicks = (int) (skill1.getDuration().get(playerSkillLVL) * 20);
+                    float height = 1.2f;
+                    float entityOriginY = (float) entity1.getY();
+                    int actionPeriod = 1;
+                    MethodAction action =
+                            (entity2) ->  {
+                                if (COMMON001_HashMapTotalDistTraveled.containsKey(entity2) && COMMON001_HashMapTotalDistTraveled.get(entity2) < finalDist) {
+                                    float currentDistShouldTravel = (finalDist / finalTicks / actionPeriod);
+                                    float distHasTraveled = COMMON001_HashMapTotalDistTraveled.get(entity2)+currentDistShouldTravel;
+                                    int updatedTick = COMMON001_HashMapPassedTicks.get(entity2)+actionPeriod;
+                                    COMMON001_HashMapTotalDistTraveled.put(entity2, distHasTraveled);
+                                    COMMON001_HashMapPassedTicks.put(entity2, updatedTick);
+                                    //start moving
+                                    Vec3 tempVec = new Vec3(entity2.getX() + currentDistShouldTravel*Math.sin((-entity2.getYRot()+180) * Mth.PI / 180.0),
+                                            entityOriginY+0.1+height*Math.sin(180.0*updatedTick/finalTicks * Mth.PI / 180.0),
+                                            entity2.getZ() + currentDistShouldTravel*Math.cos((-entity2.getYRot()+180) * Mth.PI / 180.0));
+
+                                    //check collision
+                                    int x = Mth.floor(tempVec.x());
+                                    int y = Mth.floor(tempVec.y());
+                                    int z = Mth.floor(tempVec.z());
+                                    BlockState state = entity2.getWorld().getBlockState(new BlockPos(x, y, z));
+
+                                    if (entity2.isOnGround() || state.isAir()) {
+                                        entity2.teleportTo(tempVec.x(), tempVec.y(), tempVec.z());
+                                    }
+                                    else {
+                                        //IMPORTANT! set action off to allow entity to be able to cast skills
+                                        SendPacketIsInActionToClientSideFromServer(entity2, Constants.ACTION_OFF);
+
+                                        getMethodActionTimerOverlayInstance().setSkillActionDone(entity2, SkillID);
+                                    }
+
+                                    //play animation
+                                    //...
+                                }
+                                else {
+                                    //IMPORTANT! set action off to allow entity to be able to cast skills
+                                    SendPacketIsInActionToClientSideFromServer(entity2, Constants.ACTION_OFF);
+                                    ServerUpdateLivingEntityState(entity2, Constants.IS_BACKSTEPPING, Constants.ACTION_OFF);
+
+                                    getMethodActionTimerOverlayInstance().setSkillActionDone(entity2, SkillID);
+                                }
+                            };
+                    //Actioning ends
+                    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+                    //start loop actioning with fixed period ticks
+                    getMethodActionTimerOverlayInstance().setMethodActionTimer(true, entity1, SkillID, actionPeriod, action);
+                };
+
+        tempSkillData.setActiveSkillAction1(tempSkillAction);
+
+
+        //=============================================
+        //IMPORTANT: clear value from hashmap once an entity's action is complete
+        MethodAction tempSkillCleanAction = (entity1) -> {
+            COMMON001_HashMapTotalDistTraveled.remove(entity1);
+            COMMON001_HashMapPassedTicks.remove(entity1);
+            //IMPORTANT! set action off to allow entity to be able to cast skills
+//            SendPacketIsInActionToClientSideFromServer(entity1, Constants.ACTION_OFF);
+            //wtf am I doing, prevent leaking?
+            if (COMMON001_HashMapTotalDistTraveled.size() <= 0) {
+//                                        COMMON001_HashMapTotalDistTraveled = null;
+//                                        COMMON001_HashMapPassedTicks = null;
+                COMMON001_HashMapTotalDistTraveled = new HashMap<>();
+                COMMON001_HashMapPassedTicks = new HashMap<>();
+            }
+        };
+
+        tempSkillData.setClearSkillAction(tempSkillCleanAction);
+    }
+}

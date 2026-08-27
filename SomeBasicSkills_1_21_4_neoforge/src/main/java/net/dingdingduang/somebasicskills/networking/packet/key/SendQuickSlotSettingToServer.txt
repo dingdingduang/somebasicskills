@@ -1,0 +1,45 @@
+package net.dingdingduang.somebasicskills.networking.packet.key;
+
+import com.google.common.collect.Maps;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.HashMap;
+import java.util.function.Supplier;
+
+import static net.dingdingduang.somebasicskills.util.fileio.FileReadWriteMethods.QuickslotPlayernameFileWriteTo;
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.getMinecraftServerInstance;
+import static net.dingdingduang.somebasicskills.globalvalues.GlobalServerPlayerValues.getSPlayerKey2SkillID;
+
+public class SendQuickSlotSettingToServer {
+    private HashMap<Integer, String> QuickSlotKey2Skill;
+
+    public SendQuickSlotSettingToServer(HashMap<Integer, String> keyCode2Skill) {
+        this.QuickSlotKey2Skill = keyCode2Skill;
+    }
+
+    public SendQuickSlotSettingToServer(FriendlyByteBuf buf) {
+        this.QuickSlotKey2Skill = buf.readMap(Maps::newHashMapWithExpectedSize, FriendlyByteBuf::readInt, FriendlyByteBuf::readUtf);
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+        buf.writeMap(this.QuickSlotKey2Skill, FriendlyByteBuf::writeInt, FriendlyByteBuf::writeUtf);
+    }
+
+    public boolean handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            //do shiet on server side
+            ServerPlayer sp1 = ctx.get().getSender();
+
+            MinecraftServer mcServer = getMinecraftServerInstance();
+            if (mcServer == null) { return; }
+
+            getSPlayerKey2SkillID().put(sp1, this.QuickSlotKey2Skill);
+            QuickslotPlayernameFileWriteTo(mcServer, sp1);
+        });
+
+        return true;
+    }
+}

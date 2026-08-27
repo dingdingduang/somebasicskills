@@ -1,0 +1,201 @@
+package net.dingdingduang.somebasicskills.networking;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.function.Supplier;
+
+import static net.dingdingduang.somebasicskills.globalmethods.GeneralMethods.getMinecraftServerInstance;
+import static net.dingdingduang.somebasicskills.sbsattributes.PermAttributesDistributor.*;
+import static net.dingdingduang.somebasicskills.sbsattributes.TimedAttributesDistributor.*;
+import static net.dingdingduang.somebasicskills.sbsattributes.TimedAttributesDistributor.applyTimedMovementSpeedToEntity;
+import static net.dingdingduang.somebasicskills.Constants.OP_ADDITION;
+import static net.dingdingduang.somebasicskills.Constants.OP_MULTIPLY_BASE;
+import static net.dingdingduang.somebasicskills.Constants.OP_MULTIPLY_TOTAL;
+
+public class SendTestToServer {
+    public SendTestToServer() {
+
+    }
+
+    public SendTestToServer(FriendlyByteBuf buf) {
+
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+
+    }
+
+    public boolean handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            //do shiet on server side
+            ServerPlayerEntity sp1 = ctx.get().getSender();
+
+            MinecraftServer mcServer = getMinecraftServerInstance();
+            if (mcServer == null) { return; }
+
+            applyTimedArmorToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, true, "guard");
+            double temprandomdouble = Math.random()/20;
+            applyTimedArmorToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, true, "guard");
+            temprandomdouble = Math.random()/20;
+            applyTimedArmorToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, true, "guard");
+
+            applyTimedMaxHealthToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, true, "guard1");
+            temprandomdouble = Math.random()/20;
+            applyTimedMaxHealthToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, true, "guard1");
+            temprandomdouble = Math.random()/20;
+            applyTimedMaxHealthToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, true, "guard1");
+
+            applyTimedArmorToughnessToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, true, "guard2");
+            temprandomdouble = Math.random()/20;
+            applyTimedArmorToughnessToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, true, "guard2");
+            temprandomdouble = Math.random()/20;
+            applyTimedArmorToughnessToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, true, "guard2");
+
+            applyTimedAttackDMGToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, true, "guard3");
+            temprandomdouble = Math.random()/20;
+            applyTimedAttackDMGToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, true, "guard3");
+            temprandomdouble = Math.random()/20;
+            applyTimedAttackDMGToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, true, "guard3");
+
+            applyTimedAttackKnockbackToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, true, "guard4");
+            temprandomdouble = Math.random()/20;
+            applyTimedAttackKnockbackToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, true, "guard4");
+            temprandomdouble = Math.random()/20;
+            applyTimedAttackKnockbackToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, true, "guard4");
+
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, true, "guard5");
+            temprandomdouble = Math.random()/20;
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, true, "guard5");
+            temprandomdouble = Math.random()/20;
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, true, "guard5");
+
+            applyTimedMovementSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, true, "guard6");
+            temprandomdouble = Math.random()/20;
+            applyTimedMovementSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, true, "guard6");
+            temprandomdouble = Math.random()/20;
+            applyTimedMovementSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, true, "guard6");
+
+            applyTimedAttackSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, true, "guard7");
+            temprandomdouble = Math.random()/100;
+            applyTimedAttackSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, true, "guard7");
+            temprandomdouble = Math.random()/100;
+            applyTimedAttackSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, true, "guard7");
+
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, true, "guard8");
+            temprandomdouble = Math.random()/20;
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, true, "guard8");
+            temprandomdouble = Math.random()/20;
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, true, "guard8");
+
+
+            //=============
+            applyTimedArmorToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, false, "guard");
+            temprandomdouble = Math.random()/20;
+            applyTimedArmorToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, false, "guard");
+            temprandomdouble = Math.random()/20;
+            applyTimedArmorToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, false, "guard");
+
+            applyTimedMaxHealthToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, false, "guard1");
+            temprandomdouble = Math.random()/20;
+            applyTimedMaxHealthToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, false, "guard1");
+            temprandomdouble = Math.random()/20;
+            applyTimedMaxHealthToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, false, "guard1");
+
+            applyTimedArmorToughnessToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, false, "guard2");
+            temprandomdouble = Math.random()/20;
+            applyTimedArmorToughnessToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, false, "guard2");
+            temprandomdouble = Math.random()/20;
+            applyTimedArmorToughnessToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, false, "guard2");
+
+            applyTimedAttackDMGToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, false, "guard3");
+            temprandomdouble = Math.random()/20;
+            applyTimedAttackDMGToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, false, "guard3");
+            temprandomdouble = Math.random()/20;
+            applyTimedAttackDMGToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, false, "guard3");
+
+            applyTimedAttackKnockbackToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, false, "guard4");
+            temprandomdouble = Math.random()/20;
+            applyTimedAttackKnockbackToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, false, "guard4");
+            temprandomdouble = Math.random()/20;
+            applyTimedAttackKnockbackToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, false, "guard4");
+
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, false, "guard5");
+            temprandomdouble = Math.random()/20;
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, false, "guard5");
+            temprandomdouble = Math.random()/20;
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, false, "guard5");
+
+            applyTimedMovementSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, false, "guard6");
+            temprandomdouble = Math.random()/20;
+            applyTimedMovementSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, false, "guard6");
+            temprandomdouble = Math.random()/20;
+            applyTimedMovementSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, false, "guard6");
+
+            applyTimedAttackSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, false, "guard7");
+            temprandomdouble = Math.random()/100;
+            applyTimedAttackSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, false, "guard7");
+            temprandomdouble = Math.random()/100;
+            applyTimedAttackSpeedToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, false, "guard7");
+
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, Math.random()*10, OP_ADDITION, false, "guard8");
+            temprandomdouble = Math.random()/20;
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_BASE, false, "guard8");
+            temprandomdouble = Math.random()/20;
+            applyTimedLuckToEntity(sp1, (int) Math.round(Math.random()*100)+60, temprandomdouble, OP_MULTIPLY_TOTAL, false, "guard8");
+
+            //perm
+            applyPermArmorToEntity(sp1, Math.random()*10, OP_ADDITION, "111");
+            temprandomdouble = Math.random()/20;
+            applyPermArmorToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "111");
+            temprandomdouble = Math.random()/20;
+            applyPermArmorToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "111");
+
+            applyPermMaxHealthToEntity(sp1, Math.random()*10, OP_ADDITION, "222");
+            temprandomdouble = Math.random()/20;
+            applyPermMaxHealthToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "222");
+            temprandomdouble = Math.random()/20;
+            applyPermMaxHealthToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "222");
+
+            applyPermArmorToughnessToEntity(sp1, Math.random()*10, OP_ADDITION, "333");
+            temprandomdouble = Math.random()/20;
+            applyPermArmorToughnessToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "333");
+            temprandomdouble = Math.random()/20;
+            applyPermArmorToughnessToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "333");
+
+            applyPermAttackDMGToEntity(sp1, Math.random()*10, OP_ADDITION, "444");
+            temprandomdouble = Math.random()/20;
+            applyPermAttackDMGToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "444");
+            temprandomdouble = Math.random()/20;
+            applyPermAttackDMGToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "444");
+
+            applyPermAttackKnockbackToEntity(sp1, Math.random()*10, OP_ADDITION, "555");
+            temprandomdouble = Math.random()/20;
+            applyPermAttackKnockbackToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "555");
+            temprandomdouble = Math.random()/20;
+            applyPermAttackKnockbackToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "555");
+
+            applyPermLuckToEntity(sp1, Math.random()*10, OP_ADDITION, "666");
+            temprandomdouble = Math.random()/20;
+            applyPermLuckToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "666");
+            temprandomdouble = Math.random()/20;
+            applyPermLuckToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "666");
+
+            applyPermMovementSpeedToEntity(sp1, Math.random()*10, OP_ADDITION, "777");
+            temprandomdouble = Math.random()/100;
+            applyPermMovementSpeedToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "777");
+            temprandomdouble = Math.random()/100;
+            applyPermMovementSpeedToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "777");
+
+            applyPermAttackSpeedToEntity(sp1, Math.random()*10, OP_ADDITION, "888");
+            temprandomdouble = Math.random()/20;
+            applyPermAttackSpeedToEntity(sp1, temprandomdouble, OP_MULTIPLY_BASE, "888");
+            temprandomdouble = Math.random()/20;
+            applyPermAttackSpeedToEntity(sp1, temprandomdouble, OP_MULTIPLY_TOTAL, "888");
+        });
+
+        return true;
+    }
+}

@@ -1,0 +1,202 @@
+package net.dingdingduang.somebasicskills.util;
+
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraftforge.client.gui.overlay.ForgeGui;
+import net.minecraftforge.client.gui.overlay.IGuiOverlay;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
+
+//server side only
+public class ClientMethodEntityActionTimerOverlay implements IGuiOverlay {
+    private boolean isMethodEntityActionTimerActive = false;
+    private static final ClientMethodEntityActionTimerOverlay Client_METHOD_ACTION_TIMER_OVERLAY = new ClientMethodEntityActionTimerOverlay();
+
+    private int previousForgeGuiTick = -1;
+    private int currentForgeGuiTick = -1;
+
+    private ConcurrentHashMap<Entity, HashMap<String, Integer>> ClientEntity2SkillIDWithPeriod = new ConcurrentHashMap<>();
+    private HashMap<Entity, HashMap<String, MethodEntityAction>> ClientEntity2SkillIDWithAction = new HashMap<>();
+    private HashMap<Entity, HashMap<String, Boolean>> ClientEntity2SkillIDActionDone = new HashMap<>();
+    private HashMap<Entity, HashMap<String, Integer>> ClientEntity2SkillIDActionTimer = new HashMap<>();
+    private HashMap<Entity, HashMap<String, Integer>> ClientEntity2SkillIDActionPreviousTriggeredTimer = new HashMap<>();
+    private HashMap<Entity, HashMap<String, MethodEntityAction>> ClientEntity2SkillIDWithCleanAction = new HashMap<>();
+
+//    private long timer = 0;
+
+    @Override
+    public void render(ForgeGui forgeGui, GuiGraphics guiGraphics, float partialTick, int screenWidth, int screenHeight) {
+        if (this.isMethodEntityActionTimerActive) {
+            this.currentForgeGuiTick = forgeGui.getGuiTicks();
+            if (this.currentForgeGuiTick - this.previousForgeGuiTick != 0) {
+                HashSet<Entity> entityToBeRemovedSet = new HashSet<Entity>();
+                for (Entity entity : this.ClientEntity2SkillIDWithPeriod.keySet()) {
+                    if (entity.isAlive()) {
+                        HashMap<String, Integer> entitySkill = this.ClientEntity2SkillIDWithPeriod.get(entity);
+                        HashSet<String> skillActionToBeRemovedSet = new HashSet<String>();
+                        for (String SkillID : entitySkill.keySet()) {
+                            int tickPeriod = Math.max(1, entitySkill.get(SkillID));
+                            boolean isActionDone = this.ClientEntity2SkillIDActionDone.get(entity).get(SkillID);
+
+                            int skillTimer = this.ClientEntity2SkillIDActionTimer.get(entity).get(SkillID);
+                            int currentTriggeredTimer = skillTimer / tickPeriod;
+                            int previousSkillTriggeredTimer = this.ClientEntity2SkillIDActionPreviousTriggeredTimer.get(entity).get(SkillID);
+//                            if (!isActionDone && skillTimer % tickPeriod == 0) {
+                            if (!isActionDone && previousSkillTriggeredTimer != currentTriggeredTimer) {
+//                                printInGameMsg("skillTimer" + skillTimer);
+//                                printInGameMsg("1 " + (skillTimer % tickPeriod));
+//                                printInGameMsg("2 " + currentTriggeredTimer);
+                                MethodEntityAction action = this.ClientEntity2SkillIDWithAction.get(entity).get(SkillID);
+                                if (action != null) {
+                                    action.executeAction(entity);
+                                }
+                                this.ClientEntity2SkillIDActionPreviousTriggeredTimer.get(entity).put(SkillID, currentTriggeredTimer);
+                            }
+                            this.ClientEntity2SkillIDActionTimer.get(entity).put(SkillID, skillTimer + 1);
+                            if (isActionDone) {
+                                skillActionToBeRemovedSet.add(SkillID);
+                            }
+                        }
+                        for (String SkillIDTBR : skillActionToBeRemovedSet) {
+                            entitySkill.remove(SkillIDTBR);
+                            this.ClientEntity2SkillIDWithPeriod.get(entity).remove(SkillIDTBR);
+                            this.ClientEntity2SkillIDWithAction.get(entity).remove(SkillIDTBR);
+                            this.ClientEntity2SkillIDActionDone.get(entity).remove(SkillIDTBR);
+                            this.ClientEntity2SkillIDActionTimer.get(entity).remove(SkillIDTBR);
+                            this.ClientEntity2SkillIDActionPreviousTriggeredTimer.get(entity).remove(SkillIDTBR);
+
+                            MethodEntityAction cleanAction = this.ClientEntity2SkillIDWithCleanAction.get(entity).get(SkillIDTBR);
+                            if (cleanAction != null) {
+                                cleanAction.executeAction(entity);
+                            }
+
+                            this.ClientEntity2SkillIDWithCleanAction.get(entity).remove(SkillIDTBR);
+                        }
+                        if (entitySkill.size() <= 0) {
+                            entityToBeRemovedSet.add(entity);
+                        }
+                    } else {
+                        entityToBeRemovedSet.add(entity);
+
+                        if (entity instanceof ServerPlayer) {
+                            for (String SkillID : this.ClientEntity2SkillIDWithPeriod.get(entity).keySet()) {
+                                MethodEntityAction cleanAction = this.ClientEntity2SkillIDWithCleanAction.get(entity).get(SkillID);
+                                if (cleanAction != null) {
+                                    cleanAction.executeAction(entity);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for (Entity entityTBR : entityToBeRemovedSet) {
+                    this.ClientEntity2SkillIDWithPeriod.remove(entityTBR);
+                    this.ClientEntity2SkillIDWithAction.remove(entityTBR);
+                    this.ClientEntity2SkillIDActionDone.remove(entityTBR);
+                    this.ClientEntity2SkillIDActionTimer.remove(entityTBR);
+                    this.ClientEntity2SkillIDActionPreviousTriggeredTimer.remove(entityTBR);
+                    this.ClientEntity2SkillIDWithCleanAction.remove(entityTBR);
+                }
+                if (ClientEntity2SkillIDWithPeriod.size() <= 0) {
+                    this.isMethodEntityActionTimerActive = false;
+                    this.previousForgeGuiTick = -1;
+                    this.currentForgeGuiTick = -1;
+//                printInGameMsg("Timer closed.");
+                }
+            }
+            this.previousForgeGuiTick = this.currentForgeGuiTick;
+        }
+    }
+
+    public boolean isMethodEntityActionTimerActive() {
+        return this.isMethodEntityActionTimerActive;
+    }
+
+    public void _setMethodEntityActionTimer(Entity entity, String SkillID, int tickPeriod, MethodEntityAction action) {
+//        if (getID2SkillData().get(SkillID) != null && getID2SkillData().get(SkillID).getServerConditionRequirement().executeAction(entity, SkillID)) { return; }
+//        if (this.ClientEntity2SkillIDWithPeriod == null) {
+//            this.ClientEntity2SkillIDWithPeriod = new ConcurrentHashMap<Entity, HashMap<String, Integer>>();
+//            this.ClientEntity2SkillIDWithAction = new HashMap<Entity, HashMap<String, MethodEntityAction>>();
+//            this.ClientEntity2SkillIDActionDone = new HashMap<Entity, HashMap<String, Boolean>>();
+//            this.ClientEntity2SkillIDActionTimer = new HashMap<Entity, HashMap<String, Integer>>();
+//            this.ClientEntity2SkillIDWithCleanAction = new HashMap<Entity, HashMap<String, MethodEntityAction>>();
+//        }
+        if (!this.ClientEntity2SkillIDWithPeriod.containsKey(entity)) {
+            this.ClientEntity2SkillIDWithPeriod.put(entity, new HashMap<>());
+            this.ClientEntity2SkillIDWithAction.put(entity, new HashMap<>());
+            this.ClientEntity2SkillIDActionDone.put(entity, new HashMap<>());
+            this.ClientEntity2SkillIDActionTimer.put(entity, new HashMap<>());
+            this.ClientEntity2SkillIDActionPreviousTriggeredTimer.put(entity, new HashMap<>());
+            this.ClientEntity2SkillIDWithCleanAction.put(entity, new HashMap<>());
+        }
+        this.ClientEntity2SkillIDWithPeriod.get(entity).put(SkillID, tickPeriod);
+        this.ClientEntity2SkillIDWithAction.get(entity).put(SkillID, action);
+        this.ClientEntity2SkillIDActionDone.get(entity).put(SkillID, false);
+        this.ClientEntity2SkillIDActionTimer.get(entity).put(SkillID, 0);
+        this.ClientEntity2SkillIDActionPreviousTriggeredTimer.get(entity).put(SkillID, -1);
+        this.ClientEntity2SkillIDWithCleanAction.get(entity).put(SkillID, null);
+
+        this.isMethodEntityActionTimerActive = true;
+    }
+
+    public void _setMethodEntityActionTimerWithCleanAction(Entity entity, String SkillID, int tickPeriod, MethodEntityAction action, MethodEntityAction cleanAction, boolean shouldOverwrite) {
+//        if (getID2SkillData().get(SkillID) != null && getID2SkillData().get(SkillID).getServerConditionRequirement().executeAction(entity, SkillID)) { return; }
+//        if (this.ClientEntity2SkillIDWithPeriod == null) {
+//            this.ClientEntity2SkillIDWithPeriod = new ConcurrentHashMap<Entity, HashMap<String, Integer>>();
+//            this.ClientEntity2SkillIDWithAction = new HashMap<Entity, HashMap<String, MethodEntityAction>>();
+//            this.ClientEntity2SkillIDActionDone = new HashMap<Entity, HashMap<String, Boolean>>();
+//            this.ClientEntity2SkillIDActionTimer = new HashMap<Entity, HashMap<String, Integer>>();
+//            this.ClientEntity2SkillIDWithCleanAction = new HashMap<Entity, HashMap<String, MethodEntityAction>>();
+//        }
+        if (!this.ClientEntity2SkillIDWithPeriod.containsKey(entity)) {
+            this.ClientEntity2SkillIDWithPeriod.put(entity, new HashMap<>());
+            this.ClientEntity2SkillIDWithAction.put(entity, new HashMap<>());
+            this.ClientEntity2SkillIDActionDone.put(entity, new HashMap<>());
+            this.ClientEntity2SkillIDActionTimer.put(entity, new HashMap<>());
+            this.ClientEntity2SkillIDActionPreviousTriggeredTimer.put(entity, new HashMap<>());
+            this.ClientEntity2SkillIDWithCleanAction.put(entity, new HashMap<>());
+        }
+        if (!this.ClientEntity2SkillIDWithPeriod.get(entity).containsKey(SkillID)) {
+            this.ClientEntity2SkillIDWithAction.get(entity).put(SkillID, action);
+            this.ClientEntity2SkillIDActionDone.get(entity).put(SkillID, false);
+            this.ClientEntity2SkillIDWithPeriod.get(entity).put(SkillID, tickPeriod);
+            this.ClientEntity2SkillIDActionTimer.get(entity).put(SkillID, 0);
+            this.ClientEntity2SkillIDActionPreviousTriggeredTimer.get(entity).put(SkillID, -1);
+            this.ClientEntity2SkillIDWithCleanAction.get(entity).put(SkillID, cleanAction);
+        }
+        else {
+            if (shouldOverwrite) {
+                this.ClientEntity2SkillIDWithPeriod.get(entity).put(SkillID, tickPeriod);
+                this.ClientEntity2SkillIDWithAction.get(entity).put(SkillID, action);
+                this.ClientEntity2SkillIDActionDone.get(entity).put(SkillID, false);
+                this.ClientEntity2SkillIDActionTimer.get(entity).put(SkillID, 0);
+                this.ClientEntity2SkillIDActionPreviousTriggeredTimer.get(entity).put(SkillID, -1);
+                this.ClientEntity2SkillIDWithCleanAction.get(entity).put(SkillID, cleanAction);
+            }
+        }
+        this.isMethodEntityActionTimerActive = true;
+    }
+
+    public void _setSkillActionDone(Entity entity, String SkillID) {
+        if (this.ClientEntity2SkillIDActionDone != null && this.ClientEntity2SkillIDActionDone.containsKey(entity) && this.ClientEntity2SkillIDActionDone.get(entity).containsKey(SkillID)) {
+            this.ClientEntity2SkillIDActionDone.get(entity).put(SkillID, true);
+        }
+    }
+
+//    public void removeEntityFromMap(Entity entity) {
+//        this.ClientEntity2SkillIDWithPeriod.remove(entity);
+//        this.ClientEntity2SkillIDWithAction.remove(entity);
+//        this.ClientEntity2SkillIDActionDone.remove(entity);
+//    }
+
+    public static ClientMethodEntityActionTimerOverlay getMethodEntityActionTimerOverlayInstance() {
+        return Client_METHOD_ACTION_TIMER_OVERLAY;
+    }
+
+    public static void setSkillActionDone(Entity entity, String SkillID) { getMethodEntityActionTimerOverlayInstance()._setSkillActionDone(entity, SkillID); }
+    public static void setMethodEntityActionTimer(Entity entity, String SkillID, int tickPeriod, MethodEntityAction action, MethodEntityAction cleanAction, boolean shouldOverwrite) { getMethodEntityActionTimerOverlayInstance()._setMethodEntityActionTimer(entity, SkillID, tickPeriod, action); }
+    public static void setMethodEntityActionTimerWithCleanAction(Entity entity, String SkillID, int tickPeriod, MethodEntityAction action, MethodEntityAction cleanAction, boolean shouldOverwrite) { getMethodEntityActionTimerOverlayInstance()._setMethodEntityActionTimerWithCleanAction(entity, SkillID, tickPeriod, action, cleanAction, shouldOverwrite); }
+}

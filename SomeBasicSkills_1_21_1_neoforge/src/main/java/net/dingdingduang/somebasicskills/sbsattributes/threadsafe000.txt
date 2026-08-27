@@ -1,0 +1,92 @@
+package net.dingdingduang.somebasicskills.sbsattributes;
+
+import net.minecraft.world.entity.LivingEntity;
+
+import java.util.*;
+
+public class SomeBasicSkillsAttributeThreadSafeOperation {
+    private static HashMap<LivingEntity, HashMap<UUID, ArrayList<SomeBasicSkillsAttributeTempHolder>>> ServerEntityAttrToBeAdded = new HashMap<>();
+//    private static HashSet<LivingEntity> entityToBeRemovedFromToBeAddedMap = new HashSet<>();
+    private static HashMap<LivingEntity, HashMap<UUID, SomeBasicSkillsAttributeTotalValueHolder>> ServerEntityCurrentPermAttributes = new HashMap<>();
+    private static HashMap<LivingEntity, HashMap<UUID, SomeBasicSkillsAttributeTotalValueHolder>> ServerEntityCurrentTimedAttributes = new HashMap<>();
+//    private static HashSet<LivingEntity> entityToBeRemovedCurrentAttributesMap = new HashSet<>();
+    private static HashSet<LivingEntity> entityToBeRemoved = new HashSet<>();
+
+    public static void AddAttribute(LivingEntity target, UUID attrUUID, String sourceID, SomeBasicSkillsAttribute attr, boolean shouldOverwrite, boolean isTimed) {
+        HashMap<UUID, ArrayList<SomeBasicSkillsAttributeTempHolder>> tempServerEntityAttrToBeAdded = ServerEntityAttrToBeAdded.get(target);
+        if (tempServerEntityAttrToBeAdded == null) {
+            tempServerEntityAttrToBeAdded = new HashMap<>();
+            ServerEntityAttrToBeAdded.put(target, tempServerEntityAttrToBeAdded);
+        }
+        ArrayList<SomeBasicSkillsAttributeTempHolder> tempAttrOtherElementsArr = tempServerEntityAttrToBeAdded.get(attrUUID);
+        if (tempServerEntityAttrToBeAdded == null) {
+            tempAttrOtherElementsArr = new ArrayList<>();
+            tempServerEntityAttrToBeAdded.put(attrUUID, tempAttrOtherElementsArr);
+        }
+        tempAttrOtherElementsArr.add(new SomeBasicSkillsAttributeTempHolder(sourceID, attr, shouldOverwrite, isTimed));
+    }
+
+    public static void ServerTickAddAttributeLoopThrough() {
+        for (Map.Entry<LivingEntity, HashMap<UUID, ArrayList<SomeBasicSkillsAttributeTempHolder>>> entry: ServerEntityAttrToBeAdded.entrySet()) {
+            LivingEntity entity = entry.getKey();
+            if (entity.isAlive()) {
+                //init
+                HashMap<UUID, SomeBasicSkillsAttributeTotalValueHolder> entityTotalPermAttributeHolderList = ServerEntityCurrentPermAttributes.get(entity);
+                if (entityTotalPermAttributeHolderList == null) {
+                    entityTotalPermAttributeHolderList = new HashMap<>();
+                    ServerEntityCurrentPermAttributes.put(entity, entityTotalPermAttributeHolderList);
+                }
+                HashMap<UUID, SomeBasicSkillsAttributeTotalValueHolder> entityTotalTimedAttributeHolderList = ServerEntityCurrentPermAttributes.get(entity);
+                if (entityTotalTimedAttributeHolderList == null) {
+                    entityTotalTimedAttributeHolderList = new HashMap<>();
+                    ServerEntityCurrentTimedAttributes.put(entity, entityTotalTimedAttributeHolderList);
+                }
+
+
+
+                //start
+                for (Map.Entry<UUID, ArrayList<SomeBasicSkillsAttributeTempHolder>> uuidArrayListEntry: entry.getValue().entrySet()) {
+                    UUID currentAttributeUUID = uuidArrayListEntry.getKey();
+                    SomeBasicSkillsAttributeTotalValueHolder tempPermHolder = entityTotalPermAttributeHolderList.get(currentAttributeUUID);
+                    if (tempPermHolder == null) {
+                        tempPermHolder = new SomeBasicSkillsAttributeTotalValueHolder(currentAttributeUUID);
+                        entityTotalPermAttributeHolderList.put(currentAttributeUUID, tempPermHolder);
+                    }
+                    SomeBasicSkillsAttributeTotalValueHolder tempTimedHolder = entityTotalPermAttributeHolderList.get(currentAttributeUUID);
+                    if (tempTimedHolder == null) {
+                        tempTimedHolder = new SomeBasicSkillsAttributeTotalValueHolder(currentAttributeUUID);
+                        entityTotalTimedAttributeHolderList.put(currentAttributeUUID, tempTimedHolder);
+                    }
+
+                    ArrayList<SomeBasicSkillsAttributeTempHolder> attrToBeAddedList = uuidArrayListEntry.getValue();
+                    for (SomeBasicSkillsAttributeTempHolder attrToBeAdded: attrToBeAddedList) {
+                        if (attrToBeAdded.getSBSAttr().isTimed()) {
+                            tempTimedHolder.addAttribute(attrToBeAdded.getSourceID(), attrToBeAdded.getSBSAttr(), attrToBeAdded.shouldOverwrite(), attrToBeAdded.isTimed());
+                        }
+                        else {
+                            tempPermHolder.addAttribute(attrToBeAdded.getSourceID(), attrToBeAdded.getSBSAttr(), attrToBeAdded.shouldOverwrite(), attrToBeAdded.isTimed());
+                        }
+                    }
+                    attrToBeAddedList.clear();
+                }
+            }
+            else {
+                entityToBeRemoved.add(entity);
+            }
+        }
+    }
+
+    public static void ServerTickDump() {
+        if (!entityToBeRemoved.isEmpty()) {
+            for (LivingEntity entity : entityToBeRemoved) {
+                ServerEntityAttrToBeAdded.remove(entity);
+                ServerEntityCurrentPermAttributes.remove(entity);
+                ServerEntityCurrentTimedAttributes.remove(entity);
+            }
+            entityToBeRemoved.clear();
+        }
+    }
+
+//    public static HashMap<LivingEntity, SomeBasicSkillsAttribute> getServerEntityAttrToBeAdded() { return ServerEntityAttrToBeAdded; }
+//    public static void setServerEntityAttrToBeAdded(HashMap<LivingEntity, SomeBasicSkillsAttribute> serverEntityAttrToBeAdded) { ServerEntityAttrToBeAdded = serverEntityAttrToBeAdded; }
+}

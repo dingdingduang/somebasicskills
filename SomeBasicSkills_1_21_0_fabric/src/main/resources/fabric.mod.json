@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "somebasicskills",
+	"version": "${version}",
+	"name": "Some Basic Skills",
+	"description": "Just a simple UI for skill tree.",
+	"authors": [
+		"dingdingduang"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "LGPLv3",
+	"icon": "assets/somebasicskills/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.dingdingduang.somebasicskills.SomeBasicSkills"
+		],
+		"fabric-datagen": [
+			"net.dingdingduang.somebasicskills.TemplateModDataGenerator"
+		],
+		"client": [
+			"net.dingdingduang.somebasicskills.SomeBasicSkillsClientInitialization"
+		]
+	},
+	"mixins": [
+		"somebasicskills.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.10",
+		"minecraft": "~1.21",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
